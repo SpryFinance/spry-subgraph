@@ -21,7 +21,7 @@ cumulative, the curve zone, and the dispatch case.
 git clone <repo-url> spry-subgraph && cd spry-subgraph
 yarn install
 yarn build      # = graph codegen && graph build  (compiles to ./build)
-yarn test       # 67 matchstick unit tests   (no Docker needed: npx graph test)
+yarn test       # 71 matchstick unit tests   (no Docker needed: npx graph test)
 ```
 
 `yarn build` and `yarn test` work out of the box against the placeholder config.
@@ -321,8 +321,9 @@ yarn test        # graph test -d   (Docker + matchstick)
 npx graph test   # downloads the matchstick binary and runs in-process
 ```
 
-All unit tests pass (67/67), including the inherited Uniswap tests, the Spry
-filter / tier / dynamic-fee tests, and the `SpryFee`↔`Swap` join test. Note: two
+All unit tests pass (71/71), including the inherited Uniswap tests, the Spry
+filter / tier / dynamic-fee tests, the `SpryFee`↔`Swap` join (single, multi-hop,
+and window-rollover), and the `Donate` handler. Note: two
 tests were failing in the **pristine upstream** repo (a missing
 `isExternalLiquidity` in the test pool factory, and a swap TVL assertion that
 re-derived prices through a non-idempotent path); both are fixed here.
