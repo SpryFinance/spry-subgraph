@@ -1,0 +1,197 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Example queries for the Spry subgraph.
+# Fees are in V4 pips: 1,000,000 pips = 100%. So 3000 pips = 0.30%.
+# `feePercent` is the pip value / 10000 (3000 pips -> 0.30, read as 0.30%).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 1) Top Spry pools by all-time volume, with their live dynamic-fee snapshot.
+query TopSpryPoolsByVolume {
+  pools(first: 20, orderBy: volumeUSD, orderDirection: desc) {
+    id
+    tier
+    token0 {
+      symbol
+    }
+    token1 {
+      symbol
+    }
+    volumeUSD
+    feesUSD
+    totalValueLockedUSD
+    baseFeePips
+    capFeePips
+    lastFeePips
+    avgFeePips # volume-weighted, in pips
+  }
+}
+
+# 2) A pool's most recent swaps, each with the actual dynamic fee that was applied.
+#    $pool = the pool id (0x… 32-byte PoolId, lowercase).
+query PoolRecentSwaps($pool: String!) {
+  swaps(first: 50, orderBy: timestamp, orderDirection: desc, where: { pool: $pool }) {
+    timestamp
+    origin
+    amount0
+    amount1
+    amountUSD
+    fee # per-swap LP fee in pips
+    feePercent # e.g. 0.30 == 0.30%
+    feeAmountUSD # USD fee paid on this swap
+    viaSpryRouter
+  }
+}
+
+# 3) Average / min / max dynamic fee per pool (vs the tier's base & cap).
+query PoolDynamicFeeStats {
+  pools(first: 50, orderBy: volumeUSD, orderDirection: desc) {
+    id
+    tier
+    baseFeePips
+    capFeePips
+    minFeePips
+    maxFeePips
+    avgFeePips # volume-weighted average, in pips
+    lastFeePips
+    swapCount
+    feesUSD
+  }
+}
+
+# 4) Volume and average fee by tier (the per-tier aggregate entity).
+query VolumeAndAvgFeeByTier {
+  tiers(orderBy: volumeUSD, orderDirection: desc) {
+    id # tier name, e.g. "BLUE_CHIP"
+    tickSpacing
+    poolCount
+    swapCount
+    volumeUSD
+    feesUSD
+    baseFeePips
+    capFeePips
+    minFeePips
+    maxFeePips
+    avgFeePips # volume-weighted across the whole tier
+  }
+}
+
+# 5) Daily dynamic-fee trend for one pool (last 30 days).
+query PoolDailyFeeTrend($pool: String!) {
+  poolDayDatas(first: 30, orderBy: date, orderDirection: desc, where: { pool: $pool }) {
+    date
+    volumeUSD
+    feesUSD
+    swapCount
+    minFeePips
+    maxFeePips
+    lastFeePips
+    avgFeePips # volume-weighted average fee for that day, in pips
+  }
+}
+
+# 6) An LP's positions (ERC-721 positions from the V4 PositionManager).
+#    $owner = the LP address (lowercase).
+query LpPositions($owner: String!) {
+  positions(where: { owner: $owner }, orderBy: createdAtTimestamp, orderDirection: desc) {
+    id
+    tokenId
+    owner
+    origin
+    createdAtTimestamp
+    transfers(first: 5, orderBy: timestamp, orderDirection: desc) {
+      from
+      to
+      timestamp
+    }
+  }
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SpryFee-powered queries (the hook's own event: signed cumulative, zone, case).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 7) Zone (safe/alert/danger/cap) & dispatch-case (growth/unwind/flip)
+#    distribution, both per pool and per tier.
+query ZoneAndCaseDistribution {
+  pools(first: 20, orderBy: spryObservationCount, orderDirection: desc) {
+    id
+    tier
+    spryObservationCount
+    safeCount
+    alertCount
+    dangerCount
+    capCount
+    growthCount
+    unwindCount
+    flipCount
+    lastZone
+    lastDispatchCase
+  }
+  tiers {
+    id
+    safeCount
+    alertCount
+    dangerCount
+    capCount
+    growthCount
+    unwindCount
+    flipCount
+  }
+}
+
+# 8) A pool's block-windowed cumulative trajectory (how deep the signed
+#    cumulative travelled each window). $pool = the pool id (lowercase).
+query PoolWindowTrajectory($pool: String!) {
+  spryFeeWindows(first: 50, orderBy: windowId, orderDirection: desc, where: { pool: $pool }) {
+    windowId
+    startBlock
+    cumOpen
+    cumLast
+    cumMin
+    cumMax
+    swapCount
+  }
+}
+
+# 9) A pool's recent swaps with the hook's per-swap signed cumulative, zone, and
+#    dispatch case (the SpryFee observation joined to each swap).
+#    $pool = the pool id (lowercase).
+query PoolRecentSpryObservations($pool: String!) {
+  spryFeeObservations(first: 50, orderBy: timestamp, orderDirection: desc, where: { pool: $pool }) {
+    timestamp
+    fee
+    feePercent
+    cumBefore
+    cumAfter
+    zone
+    dispatchCase
+    windowId
+    swaps {
+      id
+      amountUSD
+      origin
+    }
+  }
+}
+
+# Bonus: only the swaps that hit the danger or cap zone, across all pools.
+query DangerAndCapSwaps {
+  swaps(
+    first: 50
+    orderBy: timestamp
+    orderDirection: desc
+    where: { zone_in: [DANGER, CAP] }
+  ) {
+    timestamp
+    pool {
+      id
+      tier
+    }
+    amountUSD
+    fee
+    feePercent
+    zone
+    dispatchCase
+    cumAfter
+    windowId
+  }
+}

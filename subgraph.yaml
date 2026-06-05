@@ -1,0 +1,120 @@
+specVersion: 0.0.4
+description: Spry — Uniswap V4 + the SpryHook dynamic-fee hook. Indexes only Spry pools.
+repository: https://github.com/spry-protocol/spry-subgraph
+schema:
+  file: ./schema.graphql
+features:
+  - nonFatalErrors
+  - grafting
+dataSources:
+  # ───────────────────────────────────────────────────────────────────────────
+  # Canonical, UNMODIFIED Uniswap V4 PoolManager. The Initialize handler filters
+  # to Spry pools (hooks == SPRY_HOOK_ADDRESS in src/utils/spry.ts); every other
+  # handler is scoped to Spry pools because it bails when Pool.load(id) is null.
+  #
+  # `network` must be a network present in src/utils/chains.ts (pricing config).
+  # Run `graph build --network <name>` to rewrite address/startBlock from
+  # networks.json, or `yarn generate-subgraph <name>` to regenerate this file.
+  # ───────────────────────────────────────────────────────────────────────────
+  - kind: ethereum/contract
+    name: PoolManager
+    network: base-sepolia
+    source:
+      abi: PoolManager
+      # Canonical V4 PoolManager for the chosen network (base-sepolia shown).
+      address: "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408"
+      # PLACEHOLDER — set to the SpryHook deploy block (no Spry pool exists before
+      # it). Value below is the V4 PoolManager deploy block — a safe lower bound.
+      startBlock: 19088197
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/poolManager.mapping.ts
+      entities:
+        - Pool
+        - Token
+        - Tier
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
+        - name: PoolManager
+          file: ./abis/PoolManager.json
+      eventHandlers:
+        - event: Initialize(indexed bytes32,indexed address,indexed
+            address,uint24,int24,address,uint160,int24)
+          handler: handleInitialize
+        - event: ModifyLiquidity(indexed bytes32,indexed
+            address,int24,int24,int256,bytes32)
+          handler: handleModifyLiquidity
+        - event: Swap(indexed bytes32,indexed
+            address,int128,int128,uint160,uint128,int24,uint24)
+          handler: handleSwap
+        - event: Donate(indexed bytes32,indexed address,uint256,uint256)
+          handler: handleDonate
+  # ───────────────────────────────────────────────────────────────────────────
+  # Canonical, UNMODIFIED V4 PositionManager (ERC-721 LP positions).
+  # ───────────────────────────────────────────────────────────────────────────
+  - kind: ethereum/contract
+    name: PositionManager
+    network: base-sepolia
+    source:
+      abi: PositionManager
+      # Canonical V4 PositionManager for the chosen network (base-sepolia shown).
+      address: "0x4b2c77d209d3405f41a037ec6c77f7f5b8e2ca80"
+      # PLACEHOLDER — set to the SpryHook deploy block (same as above).
+      startBlock: 19088197
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/positionManager.mapping.ts
+      entities:
+        - Position
+      abis:
+        - name: PositionManager
+          file: ./abis/PositionManager.json
+      eventHandlers:
+        - event: Subscription(indexed uint256,indexed address)
+          handler: handleSubscription
+        - event: Unsubscription(indexed uint256,indexed address)
+          handler: handleUnsubscription
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+  # ───────────────────────────────────────────────────────────────────────────
+  # SpryHook — the custom hook. Emits SpryFee (one per Spry swap), the canonical
+  # source of Spry's per-swap analytics (signed cumulative, zone, dispatch case).
+  # `address` MUST equal SPRY_HOOK_ADDRESS in src/utils/spry.ts: the Initialize
+  # filter (on PoolManager) compares pool.hooks against that constant, while this
+  # data source listens to the hook's own events.
+  # ───────────────────────────────────────────────────────────────────────────
+  - kind: ethereum/contract
+    name: SpryHook
+    network: base-sepolia
+    source:
+      abi: SpryHook
+      # PLACEHOLDER — the deployed SpryHook address (keep in sync with spry.ts).
+      address: "0xffffffffffffffffffffffffffffffffffffffff"
+      # PLACEHOLDER — the SpryHook deploy block.
+      startBlock: 19088197
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/spryHook.mapping.ts
+      entities:
+        - Pool
+        - Tier
+        - SpryFeeObservation
+        - SpryFeeWindow
+        - SpryFeePending
+      abis:
+        - name: SpryHook
+          file: ./abis/SpryHook.json
+      eventHandlers:
+        - event: SpryFee(indexed bytes32,int256,int256,uint24,uint8,uint8,uint64)
+          handler: handleSpryFee

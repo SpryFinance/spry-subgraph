@@ -1,0 +1,760 @@
+type PoolManager @entity(immutable: false) {
+  # poolManager address
+  id: ID!
+  # amount of pools created
+  poolCount: BigInt!
+  # amoutn of transactions all time
+  txCount: BigInt!
+  # total volume all time in derived USD
+  totalVolumeUSD: BigDecimal!
+  # total volume all time in derived ETH
+  totalVolumeETH: BigDecimal!
+  # total swap fees all time in USD
+  totalFeesUSD: BigDecimal!
+  # total swap fees all time in USD
+  totalFeesETH: BigDecimal!
+  # all volume even through less reliable USD values
+  untrackedVolumeUSD: BigDecimal!
+  # TVL derived in USD
+  totalValueLockedUSD: BigDecimal!
+  # TVL derived in ETH
+  totalValueLockedETH: BigDecimal!
+  # TVL derived in USD untracked
+  totalValueLockedUSDUntracked: BigDecimal!
+  # TVL derived in ETH untracked
+  totalValueLockedETHUntracked: BigDecimal!
+  # current owner of the factory
+  owner: ID!
+}
+
+# stores for USD calculations
+type Bundle @entity(immutable: false) {
+  id: ID!
+  # price of ETH in usd
+  ethPriceUSD: BigDecimal!
+}
+
+type Token @entity(immutable: false) {
+  # token address
+  id: ID!
+  # token symbol
+  symbol: String!
+  # token name
+  name: String!
+  # token decimals
+  decimals: BigInt!
+  # token total supply
+  totalSupply: BigInt!
+  # volume in token units
+  volume: BigDecimal!
+  # volume in derived USD
+  volumeUSD: BigDecimal!
+  # volume in USD even on pools with less reliable USD values
+  untrackedVolumeUSD: BigDecimal!
+  # fees in USD
+  feesUSD: BigDecimal!
+  # transactions across all pools that include this token
+  txCount: BigInt!
+  # number of pools containing this token
+  poolCount: BigInt!
+  # liquidity across all pools in token units
+  totalValueLocked: BigDecimal!
+  # liquidity across all pools in derived USD
+  totalValueLockedUSD: BigDecimal!
+  # TVL derived in USD untracked
+  totalValueLockedUSDUntracked: BigDecimal!
+  # Note: for chains where ETH is not the native token, this will be the derived
+  # price of that chain's native token, effectively, this should be renamed
+  # derivedNative
+  derivedETH: BigDecimal!
+  # pools token is in that are white listed for USD pricing
+  whitelistPools: [Pool!]!
+  # derived fields
+  tokenDayData: [TokenDayData!]! @derivedFrom(field: "token")
+}
+
+# Spry tier names. A pool's tier is derived from its tickSpacing on Initialize.
+enum PoolTier {
+  STABLE # tickSpacing 1
+  LIKE_ASSET # tickSpacing 10
+  BLUE_CHIP # tickSpacing 60
+  VOLATILE # tickSpacing 200
+  EXOTIC # tickSpacing 1000
+}
+
+# Fee-curve zone of the SpryFee event's `cumAfter` (where the pool sits now).
+enum SpryZone {
+  SAFE # 0
+  ALERT # 1
+  DANGER # 2
+  CAP # 3
+}
+
+# Dispatch case reported by the hook for a swap.
+enum SpryDispatchCase {
+  GROWTH # 0
+  UNWIND # 1
+  FLIP # 2
+}
+
+type Pool @entity(immutable: false) {
+  # pool address
+  id: ID!
+  # creation
+  createdAtTimestamp: BigInt!
+  # block pool was created at
+  createdAtBlockNumber: BigInt!
+  # token0
+  token0: Token!
+  # token1
+  token1: Token!
+  # fee amount
+  feeTier: BigInt!
+  # in range liquidity
+  liquidity: BigInt!
+  # current price tracker
+  sqrtPrice: BigInt!
+  # token0 per token1
+  token0Price: BigDecimal!
+  # token1 per token0
+  token1Price: BigDecimal!
+  # current tick
+  tick: BigInt
+  # tick spacing
+  tickSpacing: BigInt!
+  # current observation index
+  observationIndex: BigInt!
+  # all time token0 swapped
+  volumeToken0: BigDecimal!
+  # all time token1 swapped
+  volumeToken1: BigDecimal!
+  # all time USD swapped
+  volumeUSD: BigDecimal!
+  # all time USD swapped, unfiltered for unreliable USD pools
+  untrackedVolumeUSD: BigDecimal!
+  # fees in USD
+  feesUSD: BigDecimal!
+  # all time number of transactions
+  txCount: BigInt!
+  # all time fees collected token0
+  collectedFeesToken0: BigDecimal!
+  # all time fees collected token1
+  collectedFeesToken1: BigDecimal!
+  # all time fees collected derived USD
+  collectedFeesUSD: BigDecimal!
+  # total token 0 across all ticks
+  totalValueLockedToken0: BigDecimal!
+  # total token 1 across all ticks
+  totalValueLockedToken1: BigDecimal!
+  # tvl derived ETH
+  totalValueLockedETH: BigDecimal!
+  # tvl USD
+  totalValueLockedUSD: BigDecimal!
+  # true when TVL is sourced from an external hook rather than derived pricing
+  isExternalLiquidity: Boolean!
+  # TVL derived in USD untracked
+  totalValueLockedUSDUntracked: BigDecimal!
+  # Fields used to help derived relationship
+  liquidityProviderCount: BigInt! # used to detect new exchanges
+  # hourly snapshots of pool data
+  poolHourData: [PoolHourData!]! @derivedFrom(field: "pool")
+  # daily snapshots of pool data
+  poolDayData: [PoolDayData!]! @derivedFrom(field: "pool")
+  # hooks address
+  hooks: String!
+
+  # ─────────────────── Spry-specific (see src/utils/spry.ts) ───────────────────
+  # Spry tier, derived from tickSpacing on Initialize
+  tier: PoolTier!
+  # tier base LP fee in pips (1e6 = 100%)
+  baseFeePips: BigInt!
+  # tier cap (maximum) LP fee in pips
+  capFeePips: BigInt!
+  # true when PoolKey.fee carries the V4 dynamic-fee flag (0x800000). Always true
+  # for Spry pools. Note `feeTier` above tracks the *current* fee (base fee at
+  # init, then the last per-swap fee) and is NEVER the raw 0x800000 sentinel.
+  isDynamicFee: Boolean!
+
+  # Running per-swap dynamic-fee stats in pips, updated on every Swap.
+  # most recent per-swap LP fee
+  lastFeePips: BigInt
+  # smallest per-swap LP fee observed
+  minFeePips: BigInt
+  # largest per-swap LP fee observed
+  maxFeePips: BigInt
+  # number of swaps observed (denominator for the arithmetic mean)
+  swapCount: BigInt!
+  # Σ per-swap feePips (numerator for arithmetic mean = sumFeePips / swapCount)
+  sumFeePips: BigInt!
+  # Σ (feePips × swap volumeUSD) — numerator for the volume-weighted average
+  feeWeightedVolumeUSD: BigDecimal!
+  # volume-weighted average fee in pips = feeWeightedVolumeUSD / volumeUSD.
+  # Headline Spry metric. Total LP fees earned in USD is `feesUSD` above.
+  avgFeePips: BigDecimal!
+
+  # ───────────── SpryFee event rollups (from the SpryHook data source) ─────────
+  # number of SpryFee observations (== Spry swaps) seen on this pool
+  spryObservationCount: BigInt!
+  # zone distribution of `cumAfter` across swaps
+  safeCount: BigInt!
+  alertCount: BigInt!
+  dangerCount: BigInt!
+  capCount: BigInt!
+  # dispatch-case distribution across swaps
+  growthCount: BigInt!
+  unwindCount: BigInt!
+  flipCount: BigInt!
+  # latest hook state (from the most recent SpryFee)
+  lastCum: BigInt
+  lastZone: SpryZone
+  lastDispatchCase: SpryDispatchCase
+  lastWindowId: BigInt
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  # derived fields
+  modifyLiquiditys: [ModifyLiquidity!]! @derivedFrom(field: "pool")
+  swaps: [Swap!]! @derivedFrom(field: "pool")
+  donates: [Donate!]! @derivedFrom(field: "pool")
+  ticks: [Tick!]! @derivedFrom(field: "pool")
+  spryFeeObservations: [SpryFeeObservation!]! @derivedFrom(field: "pool")
+  spryFeeWindows: [SpryFeeWindow!]! @derivedFrom(field: "pool")
+}
+
+# Aggregate stats per Spry tier (keyed by tier name, e.g. "BLUE_CHIP").
+# Maintained on Initialize (poolCount) and Swap (volume / fees / dynamic fee).
+type Tier @entity(immutable: false) {
+  # tier name == one of PoolTier
+  id: ID!
+  # same as id, for convenience
+  name: String!
+  # the tickSpacing that maps to this tier
+  tickSpacing: BigInt!
+  # tier base / cap LP fee in pips
+  baseFeePips: BigInt!
+  capFeePips: BigInt!
+  # number of Spry pools in this tier
+  poolCount: BigInt!
+  # number of swaps across the tier
+  swapCount: BigInt!
+  # all-time tracked volume in USD across the tier
+  volumeUSD: BigDecimal!
+  # all-time LP fees earned in USD across the tier
+  feesUSD: BigDecimal!
+  # dynamic-fee stats across the tier (pips)
+  minFeePips: BigInt
+  maxFeePips: BigInt
+  sumFeePips: BigInt!
+  feeWeightedVolumeUSD: BigDecimal!
+  # volume-weighted average fee in pips = feeWeightedVolumeUSD / volumeUSD
+  avgFeePips: BigDecimal!
+  # zone distribution across the tier (from SpryFee events)
+  safeCount: BigInt!
+  alertCount: BigInt!
+  dangerCount: BigInt!
+  capCount: BigInt!
+  # dispatch-case distribution across the tier
+  growthCount: BigInt!
+  unwindCount: BigInt!
+  flipCount: BigInt!
+}
+
+type Tick @entity(immutable: false) {
+  # format: <pool address>#<tick index>
+  id: ID!
+  # pool address
+  poolAddress: String
+  # tick index
+  tickIdx: BigInt!
+  # pointer to pool
+  pool: Pool!
+  # total liquidity pool has as tick lower or upper
+  liquidityGross: BigInt!
+  # how much liquidity changes when tick crossed
+  liquidityNet: BigInt!
+  # calculated price of token0 of tick within this pool - constant
+  price0: BigDecimal!
+  # calculated price of token1 of tick within this pool - constant
+  price1: BigDecimal!
+  # created time
+  createdAtTimestamp: BigInt!
+  # created block
+  createdAtBlockNumber: BigInt!
+}
+
+type Transaction @entity(immutable: true) {
+  # txn hash
+  id: ID!
+  # block txn was included in
+  blockNumber: BigInt!
+  # timestamp txn was confirmed
+  timestamp: BigInt!
+  # gas used during txn execution
+  gasUsed: BigInt!
+  gasPrice: BigInt!
+  # derived values
+  modifyLiquiditys: [ModifyLiquidity]! @derivedFrom(field: "transaction")
+  swaps: [Swap]! @derivedFrom(field: "transaction")
+  donates: [Donate]! @derivedFrom(field: "transaction")
+  transfers: [Transfer]! @derivedFrom(field: "transaction")
+  subscriptions: [Subscribe]! @derivedFrom(field: "transaction")
+  unsubscriptions: [Unsubscribe]! @derivedFrom(field: "transaction")
+}
+
+type Swap @entity(immutable: true) {
+  # transaction hash + "#" + index in swaps Transaction array
+  id: ID!
+  # pointer to transaction
+  transaction: Transaction!
+  # timestamp of transaction
+  timestamp: BigInt!
+  # pool swap occured within
+  pool: Pool!
+  # allow indexing by tokens
+  token0: Token!
+  # allow indexing by tokens
+  token1: Token!
+  # sender of the swap
+  sender: Bytes!
+  # recipient of the swap
+  # recipient: Bytes
+  # txn origin
+  origin: Bytes! # the EOA that initiated the txn
+  # delta of token0 swapped
+  amount0: BigDecimal!
+  # delta of token1 swapped
+  amount1: BigDecimal!
+  # derived info
+  amountUSD: BigDecimal!
+  # The sqrt(price) of the pool after the swap, as a Q64.96
+  sqrtPriceX96: BigInt!
+  # the tick after the swap
+  tick: BigInt!
+
+  # ─────────── Spry dynamic fee: the actual LP fee applied to THIS swap ────────
+  # per-swap LP fee in V4 pips (1e6 = 100%). Sourced from the paired SpryFee
+  # event (the authoritative LP fee); equals the V4 Swap event fee while the
+  # protocol fee is 0 (which is the case on Spry pools today).
+  fee: BigInt!
+  # fee as a percentage number, fee / 10000 (e.g. 3000 pips -> 0.30, i.e. 0.30%)
+  feePercent: BigDecimal!
+  # USD value of the LP fee paid on this swap = amountUSD × fee / 1e6
+  feeAmountUSD: BigDecimal!
+  # true if the immediate caller (`sender`) is the Spry router (SPRY_ROUTER_ADDRESS)
+  viaSpryRouter: Boolean!
+
+  # The paired SpryFee observation (the SpryFee log immediately preceding this
+  # Swap in the same tx, same pool). Null only if no SpryFee was paired.
+  spryFee: SpryFeeObservation
+  # Denormalized SpryFee fields for convenient per-swap querying/filtering:
+  # the pool's block-windowed signed cumulative before/after this swap
+  cumBefore: BigInt
+  cumAfter: BigInt
+  # the curve zone of cumAfter, and the dispatch case
+  zone: SpryZone
+  dispatchCase: SpryDispatchCase
+  # the active block-window (window start block) this swap landed in
+  windowId: BigInt
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  # index within the txn
+  logIndex: BigInt
+}
+
+# One record per SpryFee event (== one Spry swap). The canonical source of the
+# hook's per-swap analytics: the block-windowed signed cumulative, the resolved
+# LP fee, the curve zone, and the dispatch case.
+type SpryFeeObservation @entity(immutable: true) {
+  # transaction hash + "-" + log index (of the SpryFee log)
+  id: ID!
+  # pool the swap occurred on
+  pool: Pool!
+  # the pool's tier (denormalized for filtering)
+  tier: PoolTier!
+  # the block-window aggregate this observation belongs to
+  window: SpryFeeWindow!
+  # pointer to transaction
+  transaction: Transaction!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  logIndex: BigInt!
+  # block-windowed signed cumulative, pre-swap (== cumAfter of the previous swap
+  # in the window; 0 on the first swap of a new window — lazy reset)
+  cumBefore: BigInt!
+  # block-windowed signed cumulative, post-swap (== the pool's persisted signedCum)
+  cumAfter: BigInt!
+  # resolved per-swap LP fee in pips (OVERRIDE flag already stripped on-chain)
+  fee: BigInt!
+  feePercent: BigDecimal!
+  # curve zone of cumAfter
+  zone: SpryZone!
+  zoneId: Int!
+  # dispatch case
+  dispatchCase: SpryDispatchCase!
+  dispatchCaseId: Int!
+  # active window's start block
+  windowId: BigInt!
+  # the paired V4 Swap(s) (1:1 in practice; a list because @derivedFrom)
+  swaps: [Swap!]! @derivedFrom(field: "spryFee")
+}
+
+# Aggregate of all SpryFee observations within one block-window for a pool.
+# Captures the cumulative trajectory (open/last/min/max) for that window.
+type SpryFeeWindow @entity(immutable: false) {
+  # pool id + "-" + windowId
+  id: ID!
+  pool: Pool!
+  tier: PoolTier!
+  # the window's start block (== SpryFee.windowId)
+  windowId: BigInt!
+  startBlock: BigInt!
+  # signed cumulative trajectory across the window
+  cumOpen: BigInt!
+  cumLast: BigInt!
+  cumMin: BigInt!
+  cumMax: BigInt!
+  # number of swaps in this window
+  swapCount: BigInt!
+  createdAtTimestamp: BigInt!
+  createdAtBlockNumber: BigInt!
+  observations: [SpryFeeObservation!]! @derivedFrom(field: "window")
+}
+
+# Internal hand-off entity used to join a SpryFee log to the V4 Swap log that
+# immediately follows it (same tx, same pool). Written by handleSpryFee, then
+# consumed and deleted by handleSwap. Keyed by pool id. Not intended for queries.
+type SpryFeePending @entity(immutable: false) {
+  # pool id
+  id: ID!
+  # id of the SpryFeeObservation to attach to the next Swap on this pool
+  observation: String!
+  cumBefore: BigInt!
+  cumAfter: BigInt!
+  fee: BigInt!
+  zone: SpryZone!
+  dispatchCase: SpryDispatchCase!
+  windowId: BigInt!
+}
+
+type Donate @entity(immutable: true) {
+  # transaction hash + "-" + log index
+  id: ID!
+  # which txn the Donate was included in
+  transaction: Transaction!
+  # time of txn
+  timestamp: BigInt!
+  # pool donated to
+  pool: Pool!
+  # allow indexing by tokens
+  token0: Token!
+  token1: Token!
+  # the address that donated
+  sender: Bytes!
+  # the EOA that initiated the txn
+  origin: Bytes!
+  # amount of token0 donated
+  amount0: BigDecimal!
+  # amount of token1 donated
+  amount1: BigDecimal!
+  # derived USD value of the donation
+  amountUSD: BigDecimal
+  # index within the txn
+  logIndex: BigInt
+}
+
+type ModifyLiquidity @entity(immutable: true) {
+  # transaction hash + "#" + index in mints Transaction array
+  id: ID!
+  # which txn the ModifyLiquidity was included in
+  transaction: Transaction!
+  # time of txn
+  timestamp: BigInt!
+  # pool position is within
+  pool: Pool!
+  # allow indexing by tokens
+  token0: Token!
+  # allow indexing by tokens
+  token1: Token!
+  # owner of position where liquidity modified to
+  # owner: Bytes
+  # the address that modified the liquidity
+  sender: Bytes
+  # txn origin
+  origin: Bytes! # the EOA that initiated the txn
+  # amount of liquidity modified
+  amount: BigInt!
+  # amount of token 0 modified
+  amount0: BigDecimal!
+  # amount of token 1 modified
+  amount1: BigDecimal!
+  # derived amount based on available prices of tokens
+  amountUSD: BigDecimal
+  # lower tick of the position
+  tickLower: BigInt!
+  # upper tick of the position
+  tickUpper: BigInt!
+  # index within the txn
+  logIndex: BigInt
+}
+
+# Data accumulated and condensed into day stats for all of Uniswap
+type UniswapDayData @entity(immutable: false) {
+  # timestamp rounded to current day by dividing by 86400
+  id: ID!
+  # timestamp rounded to current day by dividing by 86400
+  date: Int!
+  # total daily volume in Uniswap derived in terms of ETH
+  volumeETH: BigDecimal!
+  # total daily volume in Uniswap derived in terms of USD
+  volumeUSD: BigDecimal!
+  # total daily volume in Uniswap derived in terms of USD untracked
+  volumeUSDUntracked: BigDecimal!
+  # fees in USD
+  feesUSD: BigDecimal!
+  # number of daily transactions
+  txCount: BigInt!
+  # tvl in terms of USD
+  tvlUSD: BigDecimal!
+}
+
+# Data accumulated and condensed into day stats for each pool
+type PoolDayData @entity(immutable: false) {
+  # timestamp rounded to current day by dividing by 86400
+  id: ID!
+  # timestamp rounded to current day by dividing by 86400
+  date: Int!
+  # pointer to pool
+  pool: Pool!
+  # in range liquidity at end of period
+  liquidity: BigInt!
+  # current price tracker at end of period
+  sqrtPrice: BigInt!
+  # price of token0 - derived from sqrtPrice
+  token0Price: BigDecimal!
+  # price of token1 - derived from sqrtPrice
+  token1Price: BigDecimal!
+  # current tick at end of period
+  tick: BigInt
+  # tvl derived in USD at end of period
+  tvlUSD: BigDecimal!
+  # volume in token0
+  volumeToken0: BigDecimal!
+  # volume in token1
+  volumeToken1: BigDecimal!
+  # volume in USD
+  volumeUSD: BigDecimal!
+  # fees in USD
+  feesUSD: BigDecimal!
+  # numebr of transactions during period
+  txCount: BigInt!
+  # opening price of token0
+  open: BigDecimal!
+  # high price of token0
+  high: BigDecimal!
+  # low price of token0
+  low: BigDecimal!
+  # close price of token0
+  close: BigDecimal!
+
+  # ──────────── Spry dynamic-fee stats for the period (pips) ────────────
+  minFeePips: BigInt
+  maxFeePips: BigInt
+  lastFeePips: BigInt
+  swapCount: BigInt!
+  sumFeePips: BigInt!
+  feeWeightedVolumeUSD: BigDecimal!
+  # volume-weighted average fee in pips for the period = feeWeightedVolumeUSD / volumeUSD
+  avgFeePips: BigDecimal!
+  # ──────────────────────────────────────────────────────────────────────
+}
+
+# hourly stats tracker for pool
+type PoolHourData @entity(immutable: false) {
+  # format: <pool address>-<timestamp>
+  id: ID!
+  # unix timestamp for start of hour
+  periodStartUnix: Int!
+  # pointer to pool
+  pool: Pool!
+  # in range liquidity at end of period
+  liquidity: BigInt!
+  # current price tracker at end of period
+  sqrtPrice: BigInt!
+  # price of token0 - derived from sqrtPrice
+  token0Price: BigDecimal!
+  # price of token1 - derived from sqrtPrice
+  token1Price: BigDecimal!
+  # current tick at end of period
+  tick: BigInt
+  # tvl derived in USD at end of period
+  tvlUSD: BigDecimal!
+  # volume in token0
+  volumeToken0: BigDecimal!
+  # volume in token1
+  volumeToken1: BigDecimal!
+  # volume in USD
+  volumeUSD: BigDecimal!
+  # fees in USD
+  feesUSD: BigDecimal!
+  # numebr of transactions during period
+  txCount: BigInt!
+  # opening price of token0
+  open: BigDecimal!
+  # high price of token0
+  high: BigDecimal!
+  # low price of token0
+  low: BigDecimal!
+  # close price of token0
+  close: BigDecimal!
+
+  # ──────────── Spry dynamic-fee stats for the period (pips) ────────────
+  minFeePips: BigInt
+  maxFeePips: BigInt
+  lastFeePips: BigInt
+  swapCount: BigInt!
+  sumFeePips: BigInt!
+  feeWeightedVolumeUSD: BigDecimal!
+  # volume-weighted average fee in pips for the period = feeWeightedVolumeUSD / volumeUSD
+  avgFeePips: BigDecimal!
+  # ──────────────────────────────────────────────────────────────────────
+}
+
+type TokenDayData @entity(immutable: false) {
+  # token address concatendated with date
+  id: ID!
+  # timestamp rounded to current day by dividing by 86400
+  date: Int!
+  # pointer to token
+  token: Token!
+  # volume in token units
+  volume: BigDecimal!
+  # volume in derived USD
+  volumeUSD: BigDecimal!
+  # volume in USD even on pools with less reliable USD values
+  untrackedVolumeUSD: BigDecimal!
+  # liquidity across all pools in token units
+  totalValueLocked: BigDecimal!
+  # liquidity across all pools in derived USD
+  totalValueLockedUSD: BigDecimal!
+  # price at end of period in USD
+  priceUSD: BigDecimal!
+  # fees in USD
+  feesUSD: BigDecimal!
+  # opening price USD
+  open: BigDecimal!
+  # high price USD
+  high: BigDecimal!
+  # low price USD
+  low: BigDecimal!
+  # close price USD
+  close: BigDecimal!
+}
+
+type TokenHourData @entity(immutable: false) {
+  # token address concatendated with date
+  id: ID!
+  # unix timestamp for start of hour
+  periodStartUnix: Int!
+  # pointer to token
+  token: Token!
+  # volume in token units
+  volume: BigDecimal!
+  # volume in derived USD
+  volumeUSD: BigDecimal!
+  # volume in USD even on pools with less reliable USD values
+  untrackedVolumeUSD: BigDecimal!
+  # liquidity across all pools in token units
+  totalValueLocked: BigDecimal!
+  # liquidity across all pools in derived USD
+  totalValueLockedUSD: BigDecimal!
+  # price at end of period in USD
+  priceUSD: BigDecimal!
+  # fees in USD
+  feesUSD: BigDecimal!
+  # opening price USD
+  open: BigDecimal!
+  # high price USD
+  high: BigDecimal!
+  # low price USD
+  low: BigDecimal!
+  # close price USD
+  close: BigDecimal!
+}
+
+type Position @entity(immutable: false) {
+  # tokenId
+  id: ID!
+  # tokenId
+  tokenId: BigInt!
+  # address of current owner
+  owner: String!
+  # the EOA that minted the position
+  origin: String!
+  # created time
+  createdAtTimestamp: BigInt!
+  # subscribe events
+  subscriptions: [Subscribe!]! @derivedFrom(field: "position")
+  # unsubscription events
+  unsubscriptions: [Unsubscribe!]! @derivedFrom(field: "position")
+  # transfer events
+  transfers: [Transfer!]! @derivedFrom(field: "position")
+}
+
+type Subscribe @entity(immutable: true) {
+  # transaction hash + '-' + log index
+  id: ID!
+  # token id of position subscribed to
+  tokenId: BigInt!
+  # address of subscriber
+  address: String!
+  # pointer to transaction
+  transaction: Transaction!
+  # log index
+  logIndex: BigInt!
+  # time of tx
+  timestamp: BigInt!
+  # the EOA that initiated the tx
+  origin: String!
+  # pointer to position
+  position: Position!
+}
+
+type Unsubscribe @entity(immutable: true) {
+  # transaction hash + '-' + log index
+  id: ID!
+  # token id of position unsubscribed from
+  tokenId: BigInt!
+  # address of unsubscriber
+  address: String!
+  # pointer to transaction
+  transaction: Transaction!
+  # log index
+  logIndex: BigInt!
+  # time of tx
+  timestamp: BigInt!
+  # the EOA that initiated the tx
+  origin: String!
+  # pointer to position
+  position: Position!
+}
+
+type Transfer @entity(immutable: true) {
+  # transaction hash + '-' + log index
+  id: ID!
+  # token id of position
+  tokenId: BigInt!
+  # address of previous owner
+  from: String!
+  # address of new owner
+  to: String!
+  # pointer to transaction
+  transaction: Transaction!
+  # log index
+  logIndex: BigInt!
+  # time of tx
+  timestamp: BigInt!
+  # the EOA that initiated the tx
+  origin: String!
+  # pointer to position
+  position: Position!
+}
+
