@@ -9,6 +9,27 @@ Spry pools**, (b) surface Spry's headline metric — the **per-swap dynamic fee*
 and (c) index the hook's own **`SpryFee`** event: the signed block-windowed
 cumulative, the curve zone, and the dispatch case.
 
+> **Status:** testnet-first, **pre-deployment**. Hook/router addresses and the
+> start block are clearly-marked placeholders — see
+> [Configure for your deployment](#configure-for-your-deployment).
+
+---
+
+## Quick start
+
+```bash
+git clone <repo-url> spry-subgraph && cd spry-subgraph
+yarn install
+yarn build      # = graph codegen && graph build  (compiles to ./build)
+yarn test       # 67 matchstick unit tests   (no Docker needed: npx graph test)
+```
+
+`yarn build` and `yarn test` work out of the box against the placeholder config.
+Before deploying to a real network, set your addresses (one `src/utils/spry.ts`
+edit + one `networks.json` edit) — see
+[Configure for your deployment](#configure-for-your-deployment) and
+[Build & deploy](#build--deploy).
+
 ---
 
 ## What is Spry?
