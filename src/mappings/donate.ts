@@ -15,7 +15,7 @@ export function handleDonate(event: DonateEvent): void {
 
 // V4 PoolManager `Donate` adds tokens to a pool's in-range liquidity providers.
 // The hook emits nothing extra here; we simply record the event for Spry pools.
-// TVL is intentionally left untouched — donated amounts accrue to LPs as fees,
+// TVL is intentionally left untouched: donated amounts accrue to LPs as fees,
 // and V4 does not surface them through the standard balance/price flow.
 export function handleDonateHelper(event: DonateEvent, subgraphConfig: SubgraphConfig = getSubgraphConfig()): void {
   const poolManagerAddress = subgraphConfig.poolManagerAddress

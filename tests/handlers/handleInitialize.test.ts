@@ -40,7 +40,7 @@ const INITIALIZE_FIXTURE: InitializeFixture = {
   id: USDC_WETH_POOL_ID,
   currency0: USDC_MAINNET_FIXTURE.address,
   currency1: WETH_MAINNET_FIXTURE.address,
-  fee: '8388608', // DYNAMIC_FEE_FLAG (0x800000) — Spry pools are always dynamic-fee
+  fee: '8388608', // DYNAMIC_FEE_FLAG (0x800000); Spry pools are always dynamic-fee
   tickSpacing: '10',
   hooks: TEST_SPRY_HOOK_ADDRESS,
   sqrtPriceX96: '1',

@@ -41,7 +41,7 @@ export function handleInitializeHelper(
    * v4-subgraph indexes every pool on the PoolManager. Spry only cares about
    * pools deployed against the SpryHook. We filter here so that every other
    * handler (Swap / ModifyLiquidity / Donate) is automatically scoped to Spry
-   * pools — they all bail when `Pool.load(id)` returns null.
+   * pools: they all bail when `Pool.load(id)` returns null.
    * ─────────────────────────────────────────────────────────────────────── */
   const hooks = event.params.hooks.toHexString()
   // Filter #1: hook must be the SpryHook.
@@ -56,10 +56,10 @@ export function handleInitializeHelper(
     return
   }
   // Filter #3: tickSpacing must map to a valid Spry tier. A tickSpacing outside
-  // {1,10,60,200,1000} is not a Spry pool — the hook reverts its swaps.
+  // {1,10,60,200,1000} is not a Spry pool; the hook reverts its swaps.
   const tierDef = tierFromTickSpacing(event.params.tickSpacing)
   if (tierDef === null) {
-    log.warning('Spry: skipping pool {} — tickSpacing {} is not a valid Spry tier', [
+    log.warning('Spry: skipping pool {} (tickSpacing {} is not a valid Spry tier)', [
       poolId,
       BigInt.fromI32(event.params.tickSpacing).toString(),
     ])
@@ -198,12 +198,12 @@ export function handleInitializeHelper(
   // Never store the raw 0x800000 sentinel as `feeTier`: start at the tier base
   // fee; each Swap overwrites it with the actual per-swap fee (see swap.ts).
   pool.feeTier = tierDef.baseFeePips
-  // dynamic-fee running stats — min/max/last stay null until the first swap
+  // dynamic-fee running stats: min/max/last stay null until the first swap
   pool.swapCount = ZERO_BI
   pool.sumFeePips = ZERO_BI
   pool.feeWeightedVolumeUSD = ZERO_BD
   pool.avgFeePips = ZERO_BD
-  // SpryFee rollups — last* fields stay null until the first SpryFee
+  // SpryFee rollups: last* fields stay null until the first SpryFee
   pool.spryObservationCount = ZERO_BI
   pool.safeCount = ZERO_BI
   pool.alertCount = ZERO_BI

@@ -11,18 +11,18 @@ import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
  * The canonical V4 PoolManager / PositionManager addresses and the start block
  * live in `networks.json` (and the generated `subgraph.yaml`).
  *
- * All addresses MUST be lowercase — they are compared against `*.toHexString()`,
+ * All addresses MUST be lowercase: they are compared against `*.toHexString()`,
  * which always returns lowercase hex.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-// PLACEHOLDER — replace with the deployed SpryHook address before deploying.
+// PLACEHOLDER: replace with the deployed SpryHook address before deploying.
 // Left as all-0xFF (a non-existent contract) on purpose: an unconfigured
 // subgraph then indexes NOTHING, instead of silently indexing every hookless V4
 // pool (which would be the case if this were the zero address, since plain V4
 // pools have `hooks == 0x0`).
 export const SPRY_HOOK_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 
-// PLACEHOLDER (optional) — Spry's own swap-only router (`SpryRouter`). Used only
+// PLACEHOLDER (optional): Spry's own swap-only router (`SpryRouter`). Used only
 // to tag swaps with `viaSpryRouter` by comparing it to the Swap event `sender`.
 // Leave as-is if you do not run / care about a dedicated router.
 export const SPRY_ROUTER_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
@@ -38,7 +38,7 @@ export const SPRY_ROUTER_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
  * ──────────────────────────────────────────────────────────────────────────── */
 export const DYNAMIC_FEE_FLAG: i32 = 0x800000 // 8388608
 export const OVERRIDE_FEE_FLAG: i32 = 0x400000 // 4194304
-export const LP_FEE_MASK: i32 = 0x3fffff // low 22 bits — masks off both flags
+export const LP_FEE_MASK: i32 = 0x3fffff // low 22 bits, masks off both flags
 
 export const PIPS_DENOMINATOR = BigDecimal.fromString('1000000') // 1e6 == 100%
 export const PERCENT_DENOMINATOR = BigDecimal.fromString('10000') // pips -> percent
@@ -63,7 +63,7 @@ export function feePipsToPercent(feePips: BigInt): BigDecimal {
 
 /* ─────────────────────────────── Spry tiers ─────────────────────────────────
  * A Spry pool's tier is determined SOLELY by its tickSpacing. A tickSpacing
- * outside this set is not a valid Spry pool — the hook would revert its swaps —
+ * outside this set is not a valid Spry pool (the hook would revert its swaps),
  * so the Initialize handler skips it.
  *
  *   tickSpacing  tier         base fee   cap fee     base pips   cap pips

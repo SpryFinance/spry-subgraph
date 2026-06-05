@@ -62,7 +62,7 @@ describe('handleInitialize - Spry filter & tier dispatch', () => {
   })
 
   test('skips static-fee pools pointed at the hook (V4 ignores the override)', () => {
-    // fee 500 is a static fee, not the 0x800000 dynamic sentinel — not a Spry pool
+    // fee 500 is a static fee, not the 0x800000 dynamic sentinel, so not a Spry pool
     handleInitializeHelper(buildInitialize(TEST_SPRY_HOOK_ADDRESS, 500, 60), TEST_CONFIG, TEST_SPRY_HOOK_ADDRESS)
     assert.notInStore('Pool', USDC_WETH_POOL_ID)
     assert.entityCount('Pool', 0)
@@ -76,7 +76,7 @@ describe('handleInitialize - Spry filter & tier dispatch', () => {
     const pool = Pool.load(USDC_WETH_POOL_ID)!
     assert.stringEquals(pool.tier, 'BLUE_CHIP')
     assert.assertTrue(pool.isDynamicFee)
-    // feeTier must NOT be the raw 0x800000 sentinel — it starts at the tier base fee
+    // feeTier must NOT be the raw 0x800000 sentinel; it starts at the tier base fee
     assert.bigIntEquals(pool.feeTier, BigInt.fromI32(3000))
     assert.bigIntEquals(pool.baseFeePips, BigInt.fromI32(3000))
     assert.bigIntEquals(pool.capFeePips, BigInt.fromI32(55000))

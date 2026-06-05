@@ -186,7 +186,7 @@ type Pool @entity(immutable: false) {
   swapCount: BigInt!
   # Σ per-swap feePips (numerator for arithmetic mean = sumFeePips / swapCount)
   sumFeePips: BigInt!
-  # Σ (feePips × swap volumeUSD) — numerator for the volume-weighted average
+  # Σ (feePips × swap volumeUSD): numerator for the volume-weighted average
   feeWeightedVolumeUSD: BigDecimal!
   # volume-weighted average fee in pips = feeWeightedVolumeUSD / volumeUSD.
   # Headline Spry metric. Total LP fees earned in USD is `feesUSD` above.
@@ -378,7 +378,7 @@ type SpryFeeObservation @entity(immutable: true) {
   blockNumber: BigInt!
   logIndex: BigInt!
   # block-windowed signed cumulative, pre-swap (== cumAfter of the previous swap
-  # in the window; 0 on the first swap of a new window — lazy reset)
+  # in the window; 0 on the first swap of a new window, lazy reset)
   cumBefore: BigInt!
   # block-windowed signed cumulative, post-swap (== the pool's persisted signedCum)
   cumAfter: BigInt!

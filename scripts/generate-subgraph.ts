@@ -16,7 +16,7 @@ interface NetworksConfig {
 }
 
 // Template for the Spry data sources. Spry runs on the canonical, unmodified V4
-// PoolManager + PositionManager — there are no extra (Euler/Arrakis/aggregator)
+// PoolManager + PositionManager; there are no extra (Euler/Arrakis/aggregator)
 // data sources. Pools are filtered to the SpryHook inside the Initialize handler
 // (see src/utils/spry.ts), so the hook itself is NOT a data source.
 const contractTemplates = {
@@ -79,7 +79,7 @@ const contractTemplates = {
       ],
     },
   },
-  // The SpryHook — emits SpryFee, the canonical Spry per-swap analytics source.
+  // The SpryHook: emits SpryFee, the canonical Spry per-swap analytics source.
   // Its `address` in networks.json must equal SPRY_HOOK_ADDRESS in src/utils/spry.ts.
   SpryHook: {
     kind: 'ethereum/contract',
@@ -103,7 +103,7 @@ const contractTemplates = {
 // Base subgraph configuration
 const baseConfig = {
   specVersion: '0.0.4',
-  description: 'Spry — Uniswap V4 + the SpryHook dynamic-fee hook. Indexes only Spry pools.',
+  description: 'Spry, Uniswap V4 + the SpryHook dynamic-fee hook. Indexes only Spry pools.',
   repository: 'https://github.com/spry-protocol/spry-subgraph',
   schema: {
     file: './schema.graphql',
