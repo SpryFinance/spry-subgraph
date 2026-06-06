@@ -26,17 +26,18 @@ export function handleModifyLiquidityHelper(
 ): void {
   const poolManagerAddress = subgraphConfig.poolManagerAddress
 
-  const bundle = Bundle.load('1')!
   const poolId = event.params.id.toHexString()
   const pool = Pool.load(poolId)
-  const poolManager = PoolManager.load(poolManagerAddress)
 
-  // Only Spry pools have a Pool entity (created by the Initialize filter).
+  // Only Spry pools have a Pool entity (created by the Initialize filter). Skip
+  // non-Spry pools BEFORE loading the global Bundle / PoolManager: those are
+  // created lazily on the first Spry pool's Initialize and may not exist yet.
   if (pool === null) {
-    log.debug('handleModifyLiquidityHelper: pool not found {}', [poolId])
     return
   }
 
+  const bundle = Bundle.load('1')!
+  const poolManager = PoolManager.load(poolManagerAddress)
   if (poolManager === null) {
     log.debug('handleModifyLiquidityHelper: pool manager not found {}', [poolManagerAddress])
     return

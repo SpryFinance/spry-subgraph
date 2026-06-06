@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, log, store } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, store } from '@graphprotocol/graph-ts'
 
 import { Swap as SwapEvent } from '../types/PoolManager/PoolManager'
 import { Bundle, Pool, PoolManager, SpryFeePending, Swap, Tier, Token } from '../types/schema'
@@ -39,17 +39,20 @@ export function handleSwapHelper(
   const whitelistTokens = subgraphConfig.whitelistTokens
   const nativeTokenDetails = subgraphConfig.nativeTokenDetails
 
-  const bundle = Bundle.load('1')!
-  const poolManager = PoolManager.load(poolManagerAddress)!
   const poolId = event.params.id.toHexString()
   const pool = Pool.load(poolId)
 
-  // Only Spry pools have a Pool entity (created by the Initialize filter), so a
-  // null pool means this is not a Spry pool and we skip it.
+  // Only Spry pools have a Pool entity (created by the Initialize filter). A null
+  // pool means this is not a Spry pool (or no Spry pool exists yet). Skip it
+  // BEFORE touching the global Bundle / PoolManager: those are created lazily on
+  // the first Spry pool's Initialize, so they may not exist when a non-Spry
+  // pool's Swap is the first PoolManager event we see.
   if (!pool) {
-    log.warning('Pool not found: {}', [poolId])
     return
   }
+
+  const bundle = Bundle.load('1')!
+  const poolManager = PoolManager.load(poolManagerAddress)!
 
   const token0 = Token.load(pool.token0)
   const token1 = Token.load(pool.token1)

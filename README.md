@@ -13,6 +13,9 @@ cumulative, the curve zone, and the dispatch case.
 > pre-audit. The SpryHook / SpryRouter addresses and the indexing `startBlock`
 > are set for Base Sepolia. See
 > [Configure for your deployment](#configure-for-your-deployment).
+>
+> **Base Sepolia query endpoint (Goldsky):**
+> `https://api.goldsky.com/api/public/project_cmls3noc9jy1l01uy0cr74jok/subgraphs/spry-subgraph/1.0.0/gn`
 
 ---
 

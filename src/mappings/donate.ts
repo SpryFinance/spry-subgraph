@@ -1,5 +1,3 @@
-import { log } from '@graphprotocol/graph-ts'
-
 import { Donate as DonateEvent } from '../types/PoolManager/PoolManager'
 import { Bundle, Donate, Pool, PoolManager, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
@@ -20,15 +18,17 @@ export function handleDonate(event: DonateEvent): void {
 export function handleDonateHelper(event: DonateEvent, subgraphConfig: SubgraphConfig = getSubgraphConfig()): void {
   const poolManagerAddress = subgraphConfig.poolManagerAddress
 
-  const bundle = Bundle.load('1')!
   const poolId = event.params.id.toHexString()
   const pool = Pool.load(poolId)
 
-  // Only Spry pools have a Pool entity (created by the Initialize filter).
+  // Only Spry pools have a Pool entity (created by the Initialize filter). Skip
+  // non-Spry pools BEFORE loading the global Bundle: it is created lazily on the
+  // first Spry pool's Initialize and may not exist yet.
   if (pool === null) {
-    log.debug('handleDonateHelper: pool not found {}', [poolId])
     return
   }
+
+  const bundle = Bundle.load('1')!
 
   const token0 = Token.load(pool.token0)
   const token1 = Token.load(pool.token1)
