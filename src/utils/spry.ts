@@ -15,17 +15,14 @@ import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
  * which always returns lowercase hex.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-// PLACEHOLDER: replace with the deployed SpryHook address before deploying.
-// Left as all-0xFF (a non-existent contract) on purpose: an unconfigured
-// subgraph then indexes NOTHING, instead of silently indexing every hookless V4
-// pool (which would be the case if this were the zero address, since plain V4
-// pools have `hooks == 0x0`).
-export const SPRY_HOOK_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
+// SpryHook, Base Sepolia (first deployment). Compared against the Initialize
+// event's `hooks` field (both lowercased), so keep it lowercase here. For another
+// network, set this to that network's SpryHook address.
+export const SPRY_HOOK_ADDRESS = '0x43c99d40e2e7fba44435bfc6da57a74d38fd0080'
 
-// PLACEHOLDER (optional): Spry's own swap-only router (`SpryRouter`). Used only
-// to tag swaps with `viaSpryRouter` by comparing it to the Swap event `sender`.
-// Leave as-is if you do not run / care about a dedicated router.
-export const SPRY_ROUTER_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
+// SpryRouter, Base Sepolia. Used only to tag swaps with `viaSpryRouter` by
+// comparing it to the Swap event `sender`.
+export const SPRY_ROUTER_ADDRESS = '0xd4af9ffdf2067d4ca422526d308e08cdbe690642'
 
 /* ───────────────────────────── V4 fee flags ─────────────────────────────────
  * Fees in V4 are expressed in pips: 1,000,000 pips == 100%.

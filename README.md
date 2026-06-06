@@ -9,8 +9,9 @@ Spry pools**, (b) surface Spry's headline metric, the **per-swap dynamic fee**,
 and (c) index the hook's own **`SpryFee`** event: the signed block-windowed
 cumulative, the curve zone, and the dispatch case.
 
-> **Status:** testnet-first, **pre-deployment**. Hook/router addresses and the
-> start block are clearly-marked placeholders. See
+> **Status:** live on **Base Sepolia** (first deployment), pre-mainnet and
+> pre-audit. The SpryHook / SpryRouter addresses are set for Base Sepolia; only
+> the `startBlock` is still the V4 deploy block (a safe lower bound). See
 > [Configure for your deployment](#configure-for-your-deployment).
 
 ---
@@ -64,21 +65,19 @@ Each Spry pool also has a **tier**, determined solely by its `tickSpacing`:
 
 ## Configure for your deployment
 
-Spry is pre-mainnet, so addresses are left as clearly-marked placeholders. There
-are **two** places to edit:
+The Base Sepolia addresses are already filled in (shown below). To target a
+different network, there are **two** places to edit:
 
 ### 1. `src/utils/spry.ts`: the Spry-specific addresses
 
 This is the single source of truth for the values only you know:
 
 ```ts
-// PLACEHOLDER: the deployed SpryHook address (lowercase). Until set to a real
-// address, the subgraph indexes NOTHING (the default 0xff… matches no contract).
-export const SPRY_HOOK_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
+// SpryHook on Base Sepolia (lowercase; compared against the event `hooks` field).
+export const SPRY_HOOK_ADDRESS = '0x43c99d40e2e7fba44435bfc6da57a74d38fd0080'
 
-// PLACEHOLDER (optional): Spry's swap-only router, used only to tag swaps with
-// `viaSpryRouter`. Leave as-is if you don't run one.
-export const SPRY_ROUTER_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
+// SpryRouter on Base Sepolia (tags swaps with `viaSpryRouter`).
+export const SPRY_ROUTER_ADDRESS = '0xd4af9ffdf2067d4ca422526d308e08cdbe690642'
 ```
 
 ### 2. `networks.json`: the canonical V4 contracts, the hook, + start block
@@ -93,7 +92,7 @@ exists before it). Testnet presets are provided (`base-sepolia`, `sepolia`,
 "base-sepolia": {
   "PoolManager":     { "address": "0x05E7…3408", "startBlock": 19088197 },
   "PositionManager": { "address": "0x4b2c…ca80", "startBlock": 19088197 },
-  "SpryHook":        { "address": "0xffff…ffff", "startBlock": 19088197 }
+  "SpryHook":        { "address": "0x43C9…0080", "startBlock": 19088197 }
 }
 ```
 
@@ -182,7 +181,7 @@ ticks, positions, tokens, day/hour scaffolding, liquidity math) is inherited
 | `src/mappings/modifyLiquidity.ts`     | Removed the aggregator-hook TVL branch, leaving the standard V4 TVL path only.                                                                     |
 | `src/utils/intervalUpdates.ts`        | Initialize the new `PoolDayData`/`PoolHourData` dynamic-fee accumulators.                                                                          |
 | `src/mappings/poolManager.mapping.ts` | Export `handleDonate`; drop `handleHookSwap`.                                                                                                      |
-| `subgraph.yaml` / `networks.json` / `scripts/generate-subgraph.ts` | **Three** data sources: PoolManager (incl. `Donate`), PositionManager, **SpryHook (`SpryFee`)**; testnet + placeholders; foreign data sources removed. |
+| `subgraph.yaml` / `networks.json` / `scripts/generate-subgraph.ts` | **Three** data sources: PoolManager (incl. `Donate`), PositionManager, **SpryHook (`SpryFee`)**; Base Sepolia addresses set (startBlock still a placeholder); foreign data sources removed. |
 | `package.json`                        | Renamed to `spry-subgraph`.                                                                                                                        |
 | `tests/handlers/*`                    | Pools created through the dynamic-fee Spry filter (fixtures use `0x800000`); assert tier + dynamic-fee + zone/case fields; `SpryFee`↔`Swap` join test. Fixed a pre-existing upstream `isExternalLiquidity` gap and a non-idempotent TVL assertion. |
 

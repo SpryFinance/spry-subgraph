@@ -97,8 +97,8 @@ dataSources:
     network: base-sepolia
     source:
       abi: SpryHook
-      # PLACEHOLDER: the deployed SpryHook address (keep in sync with spry.ts).
-      address: "0xffffffffffffffffffffffffffffffffffffffff"
+      # SpryHook on Base Sepolia (keep in sync with src/utils/spry.ts).
+      address: "0x43c99d40e2e7fba44435bfc6da57a74d38fd0080"
       # PLACEHOLDER: the SpryHook deploy block.
       startBlock: 19088197
     mapping:
