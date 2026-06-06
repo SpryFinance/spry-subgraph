@@ -2,15 +2,15 @@
   "base-sepolia": {
     "PoolManager": {
       "address": "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408",
-      "startBlock": 19088197
+      "startBlock": 42508548
     },
     "PositionManager": {
       "address": "0x4b2c77d209d3405f41a037ec6c77f7f5b8e2ca80",
-      "startBlock": 19088197
+      "startBlock": 42508548
     },
     "SpryHook": {
       "address": "0x43c99d40e2e7fba44435bfc6da57a74d38fd0080",
-      "startBlock": 19088197
+      "startBlock": 42508548
     }
   },
   "sepolia": {

@@ -23,9 +23,8 @@ dataSources:
       abi: PoolManager
       # Canonical V4 PoolManager for the chosen network (base-sepolia shown).
       address: "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408"
-      # PLACEHOLDER: set to the SpryHook deploy block (no Spry pool exists before
-      # it). Value below is the V4 PoolManager deploy block, a safe lower bound.
-      startBlock: 19088197
+      # SpryHook deploy block on Base Sepolia (no Spry pool exists before it).
+      startBlock: 42508548
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -66,8 +65,8 @@ dataSources:
       abi: PositionManager
       # Canonical V4 PositionManager for the chosen network (base-sepolia shown).
       address: "0x4b2c77d209d3405f41a037ec6c77f7f5b8e2ca80"
-      # PLACEHOLDER: set to the SpryHook deploy block (same as above).
-      startBlock: 19088197
+      # SpryHook deploy block on Base Sepolia (same as above).
+      startBlock: 42508548
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -99,8 +98,8 @@ dataSources:
       abi: SpryHook
       # SpryHook on Base Sepolia (keep in sync with src/utils/spry.ts).
       address: "0x43c99d40e2e7fba44435bfc6da57a74d38fd0080"
-      # PLACEHOLDER: the SpryHook deploy block.
-      startBlock: 19088197
+      # SpryHook deploy block on Base Sepolia.
+      startBlock: 42508548
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

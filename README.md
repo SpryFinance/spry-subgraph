@@ -10,8 +10,8 @@ and (c) index the hook's own **`SpryFee`** event: the signed block-windowed
 cumulative, the curve zone, and the dispatch case.
 
 > **Status:** live on **Base Sepolia** (first deployment), pre-mainnet and
-> pre-audit. The SpryHook / SpryRouter addresses are set for Base Sepolia; only
-> the `startBlock` is still the V4 deploy block (a safe lower bound). See
+> pre-audit. The SpryHook / SpryRouter addresses and the indexing `startBlock`
+> are set for Base Sepolia. See
 > [Configure for your deployment](#configure-for-your-deployment).
 
 ---
@@ -90,9 +90,9 @@ exists before it). Testnet presets are provided (`base-sepolia`, `sepolia`,
 
 ```json
 "base-sepolia": {
-  "PoolManager":     { "address": "0x05E7…3408", "startBlock": 19088197 },
-  "PositionManager": { "address": "0x4b2c…ca80", "startBlock": 19088197 },
-  "SpryHook":        { "address": "0x43C9…0080", "startBlock": 19088197 }
+  "PoolManager":     { "address": "0x05E7…3408", "startBlock": 42508548 },
+  "PositionManager": { "address": "0x4b2c…ca80", "startBlock": 42508548 },
+  "SpryHook":        { "address": "0x43C9…0080", "startBlock": 42508548 }
 }
 ```
 
@@ -181,7 +181,7 @@ ticks, positions, tokens, day/hour scaffolding, liquidity math) is inherited
 | `src/mappings/modifyLiquidity.ts`     | Removed the aggregator-hook TVL branch, leaving the standard V4 TVL path only.                                                                     |
 | `src/utils/intervalUpdates.ts`        | Initialize the new `PoolDayData`/`PoolHourData` dynamic-fee accumulators.                                                                          |
 | `src/mappings/poolManager.mapping.ts` | Export `handleDonate`; drop `handleHookSwap`.                                                                                                      |
-| `subgraph.yaml` / `networks.json` / `scripts/generate-subgraph.ts` | **Three** data sources: PoolManager (incl. `Donate`), PositionManager, **SpryHook (`SpryFee`)**; Base Sepolia addresses set (startBlock still a placeholder); foreign data sources removed. |
+| `subgraph.yaml` / `networks.json` / `scripts/generate-subgraph.ts` | **Three** data sources: PoolManager (incl. `Donate`), PositionManager, **SpryHook (`SpryFee`)**; Base Sepolia addresses and startBlock set; foreign data sources removed. |
 | `package.json`                        | Renamed to `spry-subgraph`.                                                                                                                        |
 | `tests/handlers/*`                    | Pools created through the dynamic-fee Spry filter (fixtures use `0x800000`); assert tier + dynamic-fee + zone/case fields; `SpryFee`↔`Swap` join test. Fixed a pre-existing upstream `isExternalLiquidity` gap and a non-idempotent TVL assertion. |
 
