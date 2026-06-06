@@ -11,6 +11,7 @@
     "build:docker": "docker build -t matchstick .",
     "buildonly": "graph build",
     "deploy:alchemy": "graph deploy --node https://subgraphs.alchemy.com/api/subgraphs/deploy --ipfs https://ipfs.satsuma.xyz",
+    "deploy:goldsky": "./scripts/deploy-goldsky.sh",
     "codegen": "graph codegen --output-dir src/types/",
     "test": "graph test -d",
     "test:no-tty": "docker run -i --rm --mount type=bind,source=$INIT_CWD,target=/matchstick matchstick",

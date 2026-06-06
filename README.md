@@ -134,6 +134,24 @@ graph deploy <SUBGRAPH_NAME> \
 
 `graph codegen` and `graph build` both pass, and `schema.graphql` is valid.
 
+### Deploy to Goldsky
+
+[Goldsky](https://goldsky.com) hosts standard graph-cli subgraphs, so this is the
+**same** subgraph and codebase (no fork, no separate manifest); only the deploy
+target differs. One-time setup: install the CLI (`curl https://goldsky.com | sh`)
+and run `goldsky login` with an API key from the Goldsky dashboard. Then:
+
+```bash
+yarn deploy:goldsky                       # build + deploy current manifest, version from package.json
+yarn deploy:goldsky 1.0.0                 # explicit version  -> spry-subgraph/1.0.0
+yarn deploy:goldsky 1.0.0 base-sepolia    # retarget a networks.json network first, then deploy
+```
+
+That runs [`scripts/deploy-goldsky.sh`](scripts/deploy-goldsky.sh), which does
+`graph codegen` + `graph build` then `goldsky subgraph deploy <name>/<version>
+--path .`. The `network:` in `subgraph.yaml` must be a Goldsky-supported network
+(these overlap heavily with The Graph's network slugs).
+
 ---
 
 ## What changed vs `v4-subgraph`
