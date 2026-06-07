@@ -160,6 +160,10 @@ export function handleInitializeHelper(
     token0.whitelistPools = newPools
   }
 
+  // this new Spry pool contains both tokens
+  token0.poolCount = token0.poolCount.plus(ONE_BI)
+  token1.poolCount = token1.poolCount.plus(ONE_BI)
+
   pool.token0 = token0.id
   pool.token1 = token1.id
   pool.hooks = hooks

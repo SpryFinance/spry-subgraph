@@ -120,7 +120,10 @@ describe('handleInitialize', () => {
       TEST_CONFIG.stablecoinAddresses,
       TEST_CONFIG.minimumNativeLocked,
     )
-    assertObjectMatches('Token', USDC_MAINNET_FIXTURE.address, [['derivedETH', expectedToken0Price.toString()]])
+    assertObjectMatches('Token', USDC_MAINNET_FIXTURE.address, [
+      ['derivedETH', expectedToken0Price.toString()],
+      ['poolCount', '1'],
+    ])
 
     const expectedToken1Price = findNativePerToken(
       token1,
@@ -128,7 +131,10 @@ describe('handleInitialize', () => {
       TEST_CONFIG.stablecoinAddresses,
       TEST_CONFIG.minimumNativeLocked,
     )
-    assertObjectMatches('Token', WETH_MAINNET_FIXTURE.address, [['derivedETH', expectedToken1Price.toString()]])
+    assertObjectMatches('Token', WETH_MAINNET_FIXTURE.address, [
+      ['derivedETH', expectedToken1Price.toString()],
+      ['poolCount', '1'],
+    ])
   })
 })
 
