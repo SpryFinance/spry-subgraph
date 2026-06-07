@@ -19,10 +19,6 @@ type PoolManager @entity(immutable: false) {
   totalValueLockedUSD: BigDecimal!
   # TVL derived in ETH
   totalValueLockedETH: BigDecimal!
-  # TVL derived in USD untracked
-  totalValueLockedUSDUntracked: BigDecimal!
-  # TVL derived in ETH untracked
-  totalValueLockedETHUntracked: BigDecimal!
   # current owner of the factory
   owner: ID!
 }
@@ -61,8 +57,6 @@ type Token @entity(immutable: false) {
   totalValueLocked: BigDecimal!
   # liquidity across all pools in derived USD
   totalValueLockedUSD: BigDecimal!
-  # TVL derived in USD untracked
-  totalValueLockedUSDUntracked: BigDecimal!
   # Note: for chains where ETH is not the native token, this will be the derived
   # price of that chain's native token, effectively, this should be renamed
   # derivedNative
@@ -122,8 +116,6 @@ type Pool @entity(immutable: false) {
   tick: BigInt
   # tick spacing
   tickSpacing: BigInt!
-  # current observation index
-  observationIndex: BigInt!
   # all time token0 swapped
   volumeToken0: BigDecimal!
   # all time token1 swapped
@@ -136,12 +128,6 @@ type Pool @entity(immutable: false) {
   feesUSD: BigDecimal!
   # all time number of transactions
   txCount: BigInt!
-  # all time fees collected token0
-  collectedFeesToken0: BigDecimal!
-  # all time fees collected token1
-  collectedFeesToken1: BigDecimal!
-  # all time fees collected derived USD
-  collectedFeesUSD: BigDecimal!
   # total token 0 across all ticks
   totalValueLockedToken0: BigDecimal!
   # total token 1 across all ticks
@@ -152,10 +138,8 @@ type Pool @entity(immutable: false) {
   totalValueLockedUSD: BigDecimal!
   # true when TVL is sourced from an external hook rather than derived pricing
   isExternalLiquidity: Boolean!
-  # TVL derived in USD untracked
-  totalValueLockedUSDUntracked: BigDecimal!
-  # Fields used to help derived relationship
-  liquidityProviderCount: BigInt! # used to detect new exchanges
+  # number of distinct addresses that have modified this pool's liquidity
+  liquidityProviderCount: BigInt!
   # hourly snapshots of pool data
   poolHourData: [PoolHourData!]! @derivedFrom(field: "pool")
   # daily snapshots of pool data
@@ -218,6 +202,19 @@ type Pool @entity(immutable: false) {
   ticks: [Tick!]! @derivedFrom(field: "pool")
   spryFeeObservations: [SpryFeeObservation!]! @derivedFrom(field: "pool")
   spryFeeWindows: [SpryFeeWindow!]! @derivedFrom(field: "pool")
+  liquidityProviders: [LiquidityProvider!]! @derivedFrom(field: "pool")
+}
+
+# A distinct address that has modified liquidity in a pool (id = poolId-address).
+# Created on first sighting in ModifyLiquidity; drives Pool.liquidityProviderCount.
+# NOTE: `address` is the immediate caller of the position change (typically the
+# canonical V4 PositionManager or a router), not necessarily the end-user LP.
+type LiquidityProvider @entity(immutable: true) {
+  id: ID!
+  pool: Pool!
+  address: Bytes!
+  createdAtTimestamp: BigInt!
+  createdAtBlockNumber: BigInt!
 }
 
 # Aggregate stats per Spry tier (keyed by tier name, e.g. "BLUE_CHIP").

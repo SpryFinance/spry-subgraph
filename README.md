@@ -281,6 +281,17 @@ distributions on `Pool` and `Tier` (`safe/alert/danger/capCount`,
 - **`PoolDayData` / `PoolHourData`**: `min/max/lastFeePips`, `swapCount`,
   `sumFeePips`, `feeWeightedVolumeUSD`, `avgFeePips` for the window.
 - **`Donate`**: pool, tokens, sender, amounts, `amountUSD`.
+- **`LiquidityProvider`** (one per distinct liquidity-modifying address per pool):
+  `pool`, `address`, `createdAt*`. Drives `Pool.liquidityProviderCount`. Note
+  `address` is the immediate caller (typically the V4 PositionManager or a
+  router), not necessarily the end-user LP.
+
+> **Field hygiene vs `v4-subgraph`:** `Token.poolCount` and
+> `Pool.liquidityProviderCount` are now actually maintained (the upstream left
+> them at 0). Dead inherited fields with no V4 meaning were removed:
+> `Pool.observationIndex`, `Pool.collectedFeesToken0/Token1/USD`, and the
+> never-computed untracked TVL (`Token`/`PoolManager.totalValueLockedUSDUntracked`,
+> `PoolManager.totalValueLockedETHUntracked`).
 
 ---
 

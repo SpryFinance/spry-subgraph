@@ -262,22 +262,17 @@ export const createAndStoreTestPool = (poolFixture: PoolFixture): Pool => {
   pool.token0Price = ZERO_BD
   pool.token1Price = ZERO_BD
   pool.tick = BigInt.fromI32(tick)
-  pool.observationIndex = ZERO_BI
   pool.volumeToken0 = ZERO_BD
   pool.volumeToken1 = ZERO_BD
   pool.volumeUSD = ZERO_BD
   pool.untrackedVolumeUSD = ZERO_BD
   pool.feesUSD = ZERO_BD
   pool.txCount = ZERO_BI
-  pool.collectedFeesToken0 = ZERO_BD
-  pool.collectedFeesToken1 = ZERO_BD
-  pool.collectedFeesUSD = ZERO_BD
   pool.totalValueLockedToken0 = ZERO_BD
   pool.totalValueLockedToken1 = ZERO_BD
   pool.totalValueLockedUSD = ZERO_BD
   pool.totalValueLockedETH = ZERO_BD
   pool.isExternalLiquidity = false
-  pool.totalValueLockedUSDUntracked = ZERO_BD
   pool.liquidityProviderCount = ZERO_BI
   pool.hooks = ADDRESS_ZERO
 
@@ -322,7 +317,6 @@ export const createAndStoreTestToken = (tokenFixture: TokenFixture): Token => {
   token.poolCount = ZERO_BI
   token.totalValueLocked = ZERO_BD
   token.totalValueLockedUSD = ZERO_BD
-  token.totalValueLockedUSDUntracked = ZERO_BD
   token.derivedETH = ZERO_BD
   token.whitelistPools = []
 

@@ -1,5 +1,5 @@
 import { Address, BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts'
-import { afterEach, beforeEach, clearStore, describe, test } from 'matchstick-as'
+import { afterEach, assert, beforeEach, clearStore, describe, test } from 'matchstick-as'
 
 import { handleModifyLiquidityHelper } from '../../src/mappings/modifyLiquidity'
 import { ModifyLiquidity } from '../../src/types/PoolManager/PoolManager'
@@ -145,7 +145,10 @@ describe('handleModifyLiquidity', () => {
       ['totalValueLockedToken1', amountToken1.toString()],
       ['totalValueLockedETH', poolTotalValueLockedETH.toString()],
       ['totalValueLockedUSD', poolTotalValueLockedUSD.toString()],
+      // first liquidity provider seen on this pool
+      ['liquidityProviderCount', '1'],
     ])
+    assert.entityCount('LiquidityProvider', 1)
 
     assertObjectMatches('Token', USDC_MAINNET_FIXTURE.address, [
       ['txCount', '1'],

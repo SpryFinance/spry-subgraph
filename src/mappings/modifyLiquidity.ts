@@ -1,7 +1,7 @@
 import { BigInt, log } from '@graphprotocol/graph-ts'
 
 import { ModifyLiquidity as ModifyLiquidityEvent } from '../types/PoolManager/PoolManager'
-import { Bundle, ModifyLiquidity, Pool, PoolManager, Tick, Token } from '../types/schema'
+import { Bundle, LiquidityProvider, ModifyLiquidity, Pool, PoolManager, Tick, Token } from '../types/schema'
 import { getSubgraphConfig, SubgraphConfig } from '../utils/chains'
 import { ONE_BI } from '../utils/constants'
 import { convertTokenToDecimal, loadTransaction } from '../utils/index'
@@ -88,6 +88,19 @@ export function handleModifyLiquidityHelper(
 
     // pool data
     pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // count distinct liquidity providers (the immediate caller of the position
+    // change, e.g. the PositionManager or a router; not necessarily the end user)
+    const lpId = poolId + '-' + event.params.sender.toHexString()
+    if (LiquidityProvider.load(lpId) === null) {
+      const lp = new LiquidityProvider(lpId)
+      lp.pool = pool.id
+      lp.address = event.params.sender
+      lp.createdAtTimestamp = event.block.timestamp
+      lp.createdAtBlockNumber = event.block.number
+      lp.save()
+      pool.liquidityProviderCount = pool.liquidityProviderCount.plus(ONE_BI)
+    }
 
     // Pools liquidity tracks the currently active liquidity given pools current tick.
     // We only want to update it if the new position includes the current tick.
