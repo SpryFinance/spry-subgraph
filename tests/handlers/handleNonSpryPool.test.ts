@@ -7,11 +7,10 @@ import { handleSwapHelper } from '../../src/mappings/swap'
 import { Donate, ModifyLiquidity, Swap } from '../../src/types/PoolManager/PoolManager'
 import { MOCK_EVENT, TEST_CONFIG, USDC_WETH_POOL_ID } from './constants'
 
-// Regression for the indexing crash seen on the first Base Sepolia deployment:
-// the PoolManager data source receives Swap / ModifyLiquidity / Donate events for
+// The PoolManager data source receives Swap / ModifyLiquidity / Donate events for
 // EVERY V4 pool (not just Spry), and the global Bundle / PoolManager entities are
-// created lazily on the first Spry pool's Initialize. So when a non-Spry pool's
-// event is processed before any Spry pool exists, the handlers must NOT touch the
+// created lazily on the first Spry pool's Initialize. So a non-Spry pool's event
+// can be processed before any Spry pool exists: the handlers must NOT touch the
 // (absent) globals. Here the store is empty (no Bundle / PoolManager / Pool); the
 // handlers must return cleanly instead of dereferencing null.
 

@@ -9,13 +9,12 @@ Spry pools**, (b) surface Spry's headline metric, the **per-swap dynamic fee**,
 and (c) index the hook's own **`SpryFee`** event: the signed block-windowed
 cumulative, the curve zone, and the dispatch case.
 
-> **Status:** live on **Base Sepolia** (first deployment), pre-mainnet and
-> pre-audit. The SpryHook / SpryRouter addresses and the indexing `startBlock`
-> are set for Base Sepolia. See
-> [Configure for your deployment](#configure-for-your-deployment).
+> **Status:** pre-mainnet and pre-audit, supporting **Unichain Sepolia** and
+> **Base Sepolia**. See [Configure for your deployment](#configure-for-your-deployment).
 >
-> **Base Sepolia query endpoint (Goldsky):**
-> `https://api.goldsky.com/api/public/project_cmls3noc9jy1l01uy0cr74jok/subgraphs/spry-subgraph/1.0.0/gn`
+> **Query endpoints (Goldsky):**
+> - Unichain Sepolia: `https://api.goldsky.com/api/public/project_cmls3noc9jy1l01uy0cr74jok/subgraphs/spry-subgraph-unichain-sepolia/1.0.0/gn`
+> - Base Sepolia: `https://api.goldsky.com/api/public/project_cmls3noc9jy1l01uy0cr74jok/subgraphs/spry-subgraph-base-sepolia/1.0.0/gn`
 
 ---
 
@@ -68,19 +67,22 @@ Each Spry pool also has a **tier**, determined solely by its `tickSpacing`:
 
 ## Configure for your deployment
 
-The Base Sepolia addresses are already filled in (shown below). To target a
-different network, there are **two** places to edit:
+Unichain Sepolia and Base Sepolia are already wired. To add another network,
+edit **two** places:
 
-### 1. `src/utils/spry.ts`: the Spry-specific addresses
+### 1. `src/utils/spry.ts`: the Spry hook / router addresses (per network)
 
-This is the single source of truth for the values only you know:
+These resolve per `dataSource.network()`, so one codebase serves every chain.
+Add a branch for your network (lowercase addresses):
 
 ```ts
-// SpryHook on Base Sepolia (lowercase; compared against the event `hooks` field).
-export const SPRY_HOOK_ADDRESS = '0x43c99d40e2e7fba44435bfc6da57a74d38fd0080'
-
-// SpryRouter on Base Sepolia (tags swaps with `viaSpryRouter`).
-export const SPRY_ROUTER_ADDRESS = '0xd4af9ffdf2067d4ca422526d308e08cdbe690642'
+export function getSpryHookAddress(): string {
+  const network = dataSource.network()
+  if (network == 'unichain-sepolia') return '0x68ba5f1a761253c7c169f3fde5b715c027814080'
+  if (network == 'base-sepolia') return '0x43c99d40e2e7fba44435bfc6da57a74d38fd0080'
+  return SPRY_UNCONFIGURED // 0xff…: an unconfigured network indexes nothing
+}
+// getSpryRouterAddress() follows the same shape (used only for `viaSpryRouter`).
 ```
 
 ### 2. `networks.json`: the canonical V4 contracts, the hook, + start block
@@ -88,33 +90,33 @@ export const SPRY_ROUTER_ADDRESS = '0xd4af9ffdf2067d4ca422526d308e08cdbe690642'
 The PoolManager / PositionManager are the **canonical** V4 deployments per
 network. `SpryHook` is the hook **data source** (it listens to the `SpryFee`
 event). `startBlock` should be the **SpryHook deploy block** (no Spry pool
-exists before it). Testnet presets are provided (`base-sepolia`, `sepolia`,
-`unichain-sepolia`):
+exists before it). Presets are provided for `unichain-sepolia` and `base-sepolia`
+(plus a placeholder `sepolia`):
 
 ```json
-"base-sepolia": {
-  "PoolManager":     { "address": "0x05E7…3408", "startBlock": 42508548 },
-  "PositionManager": { "address": "0x4b2c…ca80", "startBlock": 42508548 },
-  "SpryHook":        { "address": "0x43C9…0080", "startBlock": 42508548 }
+"unichain-sepolia": {
+  "PoolManager":     { "address": "0x00b0…62ac", "startBlock": 54497329 },
+  "PositionManager": { "address": "0xf969…d664", "startBlock": 54497329 },
+  "SpryHook":        { "address": "0x68ba…4080", "startBlock": 54497329 }
 }
 ```
 
-> ⚠️ **The hook address appears in two synced places** and must match: the
-> `SpryHook` entry in `networks.json` (the data source that listens to `SpryFee`)
-> **and** `SPRY_HOOK_ADDRESS` in `src/utils/spry.ts` (used by the Initialize
-> filter, which runs in the PoolManager context and can't read the hook data
-> source's address). Set both to the same value at deploy.
+> ⚠️ **The hook address lives in two synced places** and must match per network:
+> the `SpryHook` entry in `networks.json` (the data source that listens to
+> `SpryFee`) **and** the `getSpryHookAddress()` branch in `src/utils/spry.ts`
+> (used by the Initialize filter, which runs in the PoolManager context and
+> cannot read the hook data source's address).
 
 > The `network:` in `subgraph.yaml` must be one of the networks defined in
 > `src/utils/chains.ts` (the inherited multi-chain pricing config). The provided
 > testnets already exist there.
 
-The default committed `subgraph.yaml` targets `base-sepolia`. To retarget,
-either edit it directly or regenerate it from `networks.json`:
+Regenerate `subgraph.yaml` for your target network from `networks.json` before
+building or deploying:
 
 ```bash
-yarn generate-subgraph sepolia      # rewrites subgraph.yaml for the named network
-# graph-cli's native flag also works: `graph build --network sepolia`
+yarn generate-subgraph unichain-sepolia   # rewrites subgraph.yaml for the named network
+# graph-cli's native flag also works: `graph build --network unichain-sepolia`
 ```
 
 ---
@@ -131,7 +133,7 @@ yarn test             # matchstick unit tests (see "Testing" below)
 graph deploy <SUBGRAPH_NAME> \
   --node https://subgraphs.alchemy.com/api/subgraphs/deploy \
   --ipfs https://ipfs.satsuma.xyz \
-  --network base-sepolia
+  --network unichain-sepolia
 ```
 
 `graph codegen` and `graph build` both pass, and `schema.graphql` is valid.
@@ -144,15 +146,16 @@ target differs. One-time setup: install the CLI (`curl https://goldsky.com | sh`
 and run `goldsky login` with an API key from the Goldsky dashboard. Then:
 
 ```bash
-yarn deploy:goldsky                       # build + deploy current manifest, version from package.json
-yarn deploy:goldsky 1.0.0                 # explicit version  -> spry-subgraph/1.0.0
-yarn deploy:goldsky 1.0.0 base-sepolia    # retarget a networks.json network first, then deploy
+yarn deploy:goldsky 1.0.0 unichain-sepolia      # retarget Unichain -> spry-subgraph-unichain-sepolia/1.0.0
+yarn deploy:goldsky 1.0.0 base-sepolia          # retarget Base     -> spry-subgraph-base-sepolia/1.0.0
 ```
 
 That runs [`scripts/deploy-goldsky.sh`](scripts/deploy-goldsky.sh), which does
 `graph codegen` + `graph build` then `goldsky subgraph deploy <name>/<version>
---path .`. The `network:` in `subgraph.yaml` must be a Goldsky-supported network
-(these overlap heavily with The Graph's network slugs).
+--path .`. Each chain is a separate deployment, named `spry-subgraph-<network>`
+(e.g. `spry-subgraph-unichain-sepolia`, `spry-subgraph-base-sepolia`), so per-chain
+deployments do not overwrite one another. The `network:` must be a Goldsky-supported
+network (these overlap heavily with The Graph's network slugs).
 
 ---
 
@@ -184,7 +187,7 @@ ticks, positions, tokens, day/hour scaffolding, liquidity math) is inherited
 | `src/mappings/modifyLiquidity.ts`     | Removed the aggregator-hook TVL branch, leaving the standard V4 TVL path only.                                                                     |
 | `src/utils/intervalUpdates.ts`        | Initialize the new `PoolDayData`/`PoolHourData` dynamic-fee accumulators.                                                                          |
 | `src/mappings/poolManager.mapping.ts` | Export `handleDonate`; drop `handleHookSwap`.                                                                                                      |
-| `subgraph.yaml` / `networks.json` / `scripts/generate-subgraph.ts` | **Three** data sources: PoolManager (incl. `Donate`), PositionManager, **SpryHook (`SpryFee`)**; Base Sepolia addresses and startBlock set; foreign data sources removed. |
+| `subgraph.yaml` / `networks.json` / `scripts/generate-subgraph.ts` | **Three** data sources: PoolManager (incl. `Donate`), PositionManager, **SpryHook (`SpryFee`)**; per-network addresses + start blocks (Unichain Sepolia, Base Sepolia); foreign data sources removed. |
 | `package.json`                        | Renamed to `spry-subgraph`.                                                                                                                        |
 | `tests/handlers/*`                    | Pools created through the dynamic-fee Spry filter (fixtures use `0x800000`); assert tier + dynamic-fee + zone/case fields; `SpryFee`↔`Swap` join test. Fixed a pre-existing upstream `isExternalLiquidity` gap and a non-idempotent TVL assertion. |
 
@@ -317,9 +320,8 @@ Built against `SpryFinance/spry-contracts @ main` (solc 0.8.26, v4-core `46c6834
 v4-periphery `9dafaae`). The contracts team confirmed, and this subgraph relies
 on:
 
-- **The hook emits `SpryFee`**, so the previously-unindexable internals (the
-  signed block-windowed cumulative, the curve zone, the dispatch case) are now
-  **fully indexed**, not proxied. This is the headline change in this revision.
+- **The hook emits `SpryFee`**, so its internal state (the signed block-windowed
+  cumulative, the curve zone, the dispatch case) is **fully indexed**, not proxied.
 - **Protocol fee = 0** on Spry pools, so `Swap.fee == SpryFee.fee` (pure LP fee).
   We still source the LP fee from `SpryFee.fee`, so if the V4 admin ever turns on
   a protocol fee, LP analytics stay correct (and the gap vs `PoolManager Swap.fee`
@@ -352,11 +354,11 @@ yarn test        # graph test -d   (Docker + matchstick)
 npx graph test   # downloads the matchstick binary and runs in-process
 ```
 
-All unit tests pass (79/79), including the inherited Uniswap tests, the Spry
+All unit tests pass (82/82), including the inherited Uniswap tests, the Spry
 filter / tier / dynamic-fee tests, the `SpryFee`↔`Swap` join (single, multi-hop,
-and window-rollover), the `Donate` handler, pure `spry.ts` helper coverage (all
+and window-rollover), the `Donate` handler, the non-Spry-pool guard (handlers
+stay no-op when no Spry pool exists yet), pure `spry.ts` helper coverage (all
 5 tiers, the fee-flag math, and the zone/case enum maps), and multi-swap fee
-aggregation. Note: two
-tests were failing in the **pristine upstream** repo (a missing
-`isExternalLiquidity` in the test pool factory, and a swap TVL assertion that
-re-derived prices through a non-idempotent path); both are fixed here.
+aggregation. Two of these differ from the **pristine upstream** base: the test
+pool factory sets `isExternalLiquidity`, and a swap TVL assertion reads
+persisted values rather than re-deriving prices through a non-idempotent path.

@@ -6,7 +6,7 @@ import { getStaticNativePriceUSD, getSubgraphConfig, SubgraphConfig } from '../u
 import { ADDRESS_ZERO, ONE_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
 import { updatePoolDayData, updatePoolHourData } from '../utils/intervalUpdates'
 import { findNativePerToken, getNativePriceInUSD, sqrtPriceX96ToTokenPrices } from '../utils/pricing'
-import { isDynamicFee, SPRY_HOOK_ADDRESS, tierFromTickSpacing } from '../utils/spry'
+import { getSpryHookAddress, isDynamicFee, tierFromTickSpacing } from '../utils/spry'
 import { fetchTokenDecimals, fetchTokenName, fetchTokenSymbol, fetchTokenTotalSupply } from '../utils/token'
 
 // The subgraph handler must have this signature to be able to handle events,
@@ -19,7 +19,7 @@ export function handleInitializeHelper(
   event: InitializeEvent,
   subgraphConfig: SubgraphConfig = getSubgraphConfig(),
   // Spry hook address is injectable so tests can supply their own fixture hook.
-  spryHookAddress: string = SPRY_HOOK_ADDRESS,
+  spryHookAddress: string = getSpryHookAddress(),
 ): void {
   const poolManagerAddress = subgraphConfig.poolManagerAddress
   const whitelistTokens = subgraphConfig.whitelistTokens
@@ -39,7 +39,7 @@ export function handleInitializeHelper(
 
   /* ─────────────────────────── Spry filter ────────────────────────────────
    * v4-subgraph indexes every pool on the PoolManager. Spry only cares about
-   * pools deployed against the SpryHook. We filter here so that every other
+   * pools that use the SpryHook. We filter here so that every other
    * handler (Swap / ModifyLiquidity / Donate) is automatically scoped to Spry
    * pools: they all bail when `Pool.load(id)` returns null.
    * ─────────────────────────────────────────────────────────────────────── */

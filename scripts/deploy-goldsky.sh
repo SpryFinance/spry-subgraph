@@ -37,11 +37,12 @@ if ! command -v goldsky >/dev/null 2>&1; then
   exit 1
 fi
 
-# Make sure the Spry hook address is set (the all-0xFF placeholder indexes nothing).
-HOOK="$(node -e "const s=require('fs').readFileSync('src/utils/spry.ts','utf8'); const m=s.match(/SPRY_HOOK_ADDRESS = '([^']+)'/); process.stdout.write(m?m[1]:'')")"
-if [ "$HOOK" = "0xffffffffffffffffffffffffffffffffffffffff" ]; then
-  echo "Warning: SPRY_HOOK_ADDRESS in src/utils/spry.ts is still the placeholder." >&2
-  echo "         The subgraph will index nothing until you set the real hook address." >&2
+# Goldsky subgraph name: suffix the network so each chain is its own deployment
+# (e.g. spry-subgraph-unichain-sepolia, spry-subgraph-base-sepolia) and per-chain
+# deployments do not overwrite one another. The no-network default stays bare.
+DEPLOY_NAME="$NAME"
+if [ -n "$NETWORK" ]; then
+  DEPLOY_NAME="$NAME-$NETWORK"
 fi
 
 if [ -n "$NETWORK" ]; then
@@ -53,8 +54,8 @@ echo "==> codegen + build"
 yarn run codegen
 yarn run buildonly
 
-echo "==> Deploying to Goldsky as: $NAME/$VERSION"
-goldsky subgraph deploy "$NAME/$VERSION" --path .
+echo "==> Deploying to Goldsky as: $DEPLOY_NAME/$VERSION"
+goldsky subgraph deploy "$DEPLOY_NAME/$VERSION" --path .
 
 echo ""
 echo "Deployed. Get the query URL and manage tags at https://app.goldsky.com"

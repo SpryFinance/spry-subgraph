@@ -1,8 +1,9 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Example queries for the Spry subgraph.
 #
-# Live endpoint (Base Sepolia, Goldsky):
-#   https://api.goldsky.com/api/public/project_cmls3noc9jy1l01uy0cr74jok/subgraphs/spry-subgraph/1.0.0/gn
+# Live endpoints (Goldsky):
+#   Unichain Sepolia: https://api.goldsky.com/api/public/project_cmls3noc9jy1l01uy0cr74jok/subgraphs/spry-subgraph-unichain-sepolia/1.0.0/gn
+#   Base Sepolia:     https://api.goldsky.com/api/public/project_cmls3noc9jy1l01uy0cr74jok/subgraphs/spry-subgraph-base-sepolia/1.0.0/gn
 #
 # Fees are in V4 pips: 1,000,000 pips = 100%. So 3000 pips = 0.30%.
 # `feePercent` is the pip value / 10000 (3000 pips -> 0.30, read as 0.30%).

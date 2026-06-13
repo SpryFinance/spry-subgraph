@@ -7,24 +7,13 @@ features:
   - nonFatalErrors
   - grafting
 dataSources:
-  # ───────────────────────────────────────────────────────────────────────────
-  # Canonical, UNMODIFIED Uniswap V4 PoolManager. The Initialize handler filters
-  # to Spry pools (hooks == SPRY_HOOK_ADDRESS in src/utils/spry.ts); every other
-  # handler is scoped to Spry pools because it bails when Pool.load(id) is null.
-  #
-  # `network` must be a network present in src/utils/chains.ts (pricing config).
-  # Run `graph build --network <name>` to rewrite address/startBlock from
-  # networks.json, or `yarn generate-subgraph <name>` to regenerate this file.
-  # ───────────────────────────────────────────────────────────────────────────
-  - kind: ethereum/contract
-    name: PoolManager
-    network: base-sepolia
-    source:
+  - source:
       abi: PoolManager
-      # Canonical V4 PoolManager for the chosen network (base-sepolia shown).
-      address: "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408"
-      # SpryHook deploy block on Base Sepolia (no Spry pool exists before it).
-      startBlock: 42508548
+      address: "0x00b036b58a818b1bc34d502d3fe730db729e62ac"
+      startBlock: 54497329
+    name: PoolManager
+    network: unichain-sepolia
+    kind: ethereum/contract
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -55,18 +44,13 @@ dataSources:
           handler: handleSwap
         - event: Donate(indexed bytes32,indexed address,uint256,uint256)
           handler: handleDonate
-  # ───────────────────────────────────────────────────────────────────────────
-  # Canonical, UNMODIFIED V4 PositionManager (ERC-721 LP positions).
-  # ───────────────────────────────────────────────────────────────────────────
-  - kind: ethereum/contract
-    name: PositionManager
-    network: base-sepolia
-    source:
+  - source:
       abi: PositionManager
-      # Canonical V4 PositionManager for the chosen network (base-sepolia shown).
-      address: "0x4b2c77d209d3405f41a037ec6c77f7f5b8e2ca80"
-      # SpryHook deploy block on Base Sepolia (same as above).
-      startBlock: 42508548
+      address: "0xf969aee60879c54baaed9f3ed26147db216fd664"
+      startBlock: 54497329
+    name: PositionManager
+    network: unichain-sepolia
+    kind: ethereum/contract
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -84,22 +68,13 @@ dataSources:
           handler: handleUnsubscription
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
-  # ───────────────────────────────────────────────────────────────────────────
-  # SpryHook: the custom hook. Emits SpryFee (one per Spry swap), the canonical
-  # source of Spry's per-swap analytics (signed cumulative, zone, dispatch case).
-  # `address` MUST equal SPRY_HOOK_ADDRESS in src/utils/spry.ts: the Initialize
-  # filter (on PoolManager) compares pool.hooks against that constant, while this
-  # data source listens to the hook's own events.
-  # ───────────────────────────────────────────────────────────────────────────
-  - kind: ethereum/contract
-    name: SpryHook
-    network: base-sepolia
-    source:
+  - source:
       abi: SpryHook
-      # SpryHook on Base Sepolia (keep in sync with src/utils/spry.ts).
-      address: "0x43c99d40e2e7fba44435bfc6da57a74d38fd0080"
-      # SpryHook deploy block on Base Sepolia.
-      startBlock: 42508548
+      address: "0x68ba5f1a761253c7c169f3fde5b715c027814080"
+      startBlock: 54497329
+    name: SpryHook
+    network: unichain-sepolia
+    kind: ethereum/contract
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

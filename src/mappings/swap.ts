@@ -18,7 +18,7 @@ import {
   getTrackedAmountUSD,
   sqrtPriceX96ToTokenPrices,
 } from '../utils/pricing'
-import { cleanFeePips, feePipsToPercent, SPRY_ROUTER_ADDRESS } from '../utils/spry'
+import { cleanFeePips, feePipsToPercent, getSpryRouterAddress } from '../utils/spry'
 
 export function handleSwap(event: SwapEvent): void {
   handleSwapHelper(event)
@@ -28,7 +28,7 @@ export function handleSwapHelper(
   event: SwapEvent,
   subgraphConfig: SubgraphConfig = getSubgraphConfig(),
   // Spry router address is injectable so tests can supply their own fixture router.
-  spryRouterAddress: string = SPRY_ROUTER_ADDRESS,
+  spryRouterAddress: string = getSpryRouterAddress(),
 ): void {
   const poolManagerAddress = subgraphConfig.poolManagerAddress
   const stablecoinWrappedNativePoolId = subgraphConfig.stablecoinWrappedNativePoolId

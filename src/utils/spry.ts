@@ -1,28 +1,43 @@
-import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, dataSource } from '@graphprotocol/graph-ts'
 
-/* ───────────────────────── Spry deployment constants ─────────────────────────
+/* ───────────────────────── Spry deployment addresses ─────────────────────────
  *
  * Spry is Uniswap V4 + ONE custom hook (`SpryHook`) deployed on the canonical,
  * unmodified V4 PoolManager / PositionManager. A "Spry pool" is a V4 pool whose
- * `hooks` field == SPRY_HOOK_ADDRESS and whose `fee` field is the dynamic-fee
+ * `hooks` field == the SpryHook address and whose `fee` field is the dynamic-fee
  * sentinel (0x800000).
  *
- * This file is the SINGLE place a deployer edits the Spry-specific addresses.
- * The canonical V4 PoolManager / PositionManager addresses and the start block
- * live in `networks.json` (and the generated `subgraph.yaml`).
+ * The hook / router addresses are resolved per network via `dataSource.network()`
+ * so one codebase serves every chain. This is the SINGLE place a deployer adds a
+ * network's Spry addresses; the canonical V4 PoolManager / PositionManager and
+ * the start block live in `networks.json` (and the generated `subgraph.yaml`).
+ * Per network, the hook address here MUST match the `SpryHook` data source
+ * address in `networks.json`.
  *
  * All addresses MUST be lowercase: they are compared against `*.toHexString()`,
- * which always returns lowercase hex.
+ * which always returns lowercase hex. An unconfigured network returns the
+ * all-0xff placeholder, so the subgraph indexes NOTHING there (rather than every
+ * hookless V4 pool, which a zero address would match).
  * ──────────────────────────────────────────────────────────────────────────── */
+const SPRY_UNCONFIGURED = '0xffffffffffffffffffffffffffffffffffffffff'
 
-// SpryHook, Base Sepolia (first deployment). Compared against the Initialize
-// event's `hooks` field (both lowercased), so keep it lowercase here. For another
-// network, set this to that network's SpryHook address.
-export const SPRY_HOOK_ADDRESS = '0x43c99d40e2e7fba44435bfc6da57a74d38fd0080'
+// The deployed SpryHook address for the current network (compared against the
+// Initialize event's `hooks` field).
+export function getSpryHookAddress(): string {
+  const network = dataSource.network()
+  if (network == 'unichain-sepolia') return '0x68ba5f1a761253c7c169f3fde5b715c027814080'
+  if (network == 'base-sepolia') return '0x43c99d40e2e7fba44435bfc6da57a74d38fd0080'
+  return SPRY_UNCONFIGURED
+}
 
-// SpryRouter, Base Sepolia. Used only to tag swaps with `viaSpryRouter` by
-// comparing it to the Swap event `sender`.
-export const SPRY_ROUTER_ADDRESS = '0xd4af9ffdf2067d4ca422526d308e08cdbe690642'
+// The deployed SpryRouter for the current network (used only to tag swaps with
+// `viaSpryRouter` by comparing it to the Swap event `sender`).
+export function getSpryRouterAddress(): string {
+  const network = dataSource.network()
+  if (network == 'unichain-sepolia') return '0xd887e2d555f98cb76ae3d0755af7dddc503ef017'
+  if (network == 'base-sepolia') return '0xd4af9ffdf2067d4ca422526d308e08cdbe690642'
+  return SPRY_UNCONFIGURED
+}
 
 /* ───────────────────────────── V4 fee flags ─────────────────────────────────
  * Fees in V4 are expressed in pips: 1,000,000 pips == 100%.

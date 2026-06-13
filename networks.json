@@ -1,4 +1,18 @@
 {
+  "unichain-sepolia": {
+    "PoolManager": {
+      "address": "0x00b036b58a818b1bc34d502d3fe730db729e62ac",
+      "startBlock": 54497329
+    },
+    "PositionManager": {
+      "address": "0xf969aee60879c54baaed9f3ed26147db216fd664",
+      "startBlock": 54497329
+    },
+    "SpryHook": {
+      "address": "0x68ba5f1a761253c7c169f3fde5b715c027814080",
+      "startBlock": 54497329
+    }
+  },
   "base-sepolia": {
     "PoolManager": {
       "address": "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408",
@@ -25,20 +39,6 @@
     "SpryHook": {
       "address": "0xffffffffffffffffffffffffffffffffffffffff",
       "startBlock": 7258946
-    }
-  },
-  "unichain-sepolia": {
-    "PoolManager": {
-      "address": "0x00b036b58a818b1bc34d502d3fe730db729e62ac",
-      "startBlock": 7092034
-    },
-    "PositionManager": {
-      "address": "0xf969aee60879c54baaed9f3ed26147db216fd664",
-      "startBlock": 7092034
-    },
-    "SpryHook": {
-      "address": "0xffffffffffffffffffffffffffffffffffffffff",
-      "startBlock": 7092034
     }
   }
 }
